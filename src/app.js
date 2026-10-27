@@ -564,6 +564,13 @@ $('export').onclick = () => {
 };
 $('print').onclick = () => window.print();
 
+// The header menu closes after an action, on Escape, and on a click elsewhere.
+const moreMenu = document.querySelector('.header-more');
+const closeMoreMenu = () => { if (moreMenu) moreMenu.open = false; };
+document.querySelectorAll('.more-menu > button').forEach(b => b.addEventListener('click', closeMoreMenu));
+document.addEventListener('click', e => { if (moreMenu?.open && !moreMenu.contains(e.target)) closeMoreMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && moreMenu?.open) { closeMoreMenu(); moreMenu.querySelector('summary').focus(); } });
+
 // ------------------------------------------------------------------ tabs & lessons
 
 function showTab(name) {
@@ -593,6 +600,7 @@ function switchCourse(id) {
   $('tab-words').textContent = `词汇 · ${vocab().length}`; $('tab-grammar').textContent = `语法 · ${grammar().length}`;
   $('tab-listening').textContent = `听力${(L.listening || []).length ? ' · ' + L.listening.length : ''}`;
   $('prev-course').disabled = index === 0; $('next-course').disabled = index === LESSONS.length - 1;
+  $('course-position').textContent = `${index + 1} / ${LESSONS.length}`; $('course').title = $('course').selectedOptions[0]?.textContent || '';
   document.title = `${L.title} · Bunmyaku`;
   renderAll(); showTab('read');
   $('save-status').textContent = storageOK ? '本机独立保存' : '请导出备份';
@@ -601,7 +609,7 @@ $('course').innerHTML = LESSONS.map(l => `<option value="${esc(l.id)}">${l.numbe
 $('course').onchange = e => switchCourse(e.target.value);
 $('prev-course').onclick = () => { const i = LESSONS.indexOf(L); if (i > 0) switchCourse(LESSONS[i - 1].id); };
 $('next-course').onclick = () => { const i = LESSONS.indexOf(L); if (i < LESSONS.length - 1) switchCourse(LESSONS[i + 1].id); };
-$('pack-title').textContent = PACK.title || PACK_ID; $('pack-license').textContent = PACK.license ? `内容授权：${PACK.license}` : '';
+$('pack-title').textContent = PACK.title || PACK_ID; $('pack-license').textContent = PACK.license ? `内容授权 ${PACK.license}` : '';
 
 // ------------------------------------------------------------------ tutor
 

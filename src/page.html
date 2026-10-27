@@ -14,7 +14,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 </head><body>
 <aside class="sidebar">
 <div class="brand"><span class="brand-mark">文</span><div><strong>Bunmyaku</strong><small>LEARN JAPANESE IN CONTEXT</small></div></div>
-<div class="coursebar"><label for="course">正在读的课</label><select id="course" aria-label="选择课"></select><button id="prev-course" aria-label="上一课">←</button><span class="course-count" id="pack-title"></span><button id="next-course" aria-label="下一课">→</button></div>
+<div class="coursebar"><label for="course">正在读的课</label><select id="course" aria-label="选择课"></select><button id="prev-course" aria-label="上一课">←</button><span class="course-count" id="course-position" aria-live="polite"></span><button id="next-course" aria-label="下一课">→</button></div>
 <nav class="tabs" role="tablist" aria-label="学习内容">
 <span class="nav-section" aria-hidden="true">课内学习</span>
 <button id="tab-read" role="tab" aria-controls="read" aria-selected="true" data-tab="read" data-index="01">课文阅读</button>
@@ -25,7 +25,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <span class="nav-section" aria-hidden="true">记录</span>
 <button id="tab-notes" role="tab" aria-controls="notes" aria-selected="false" data-tab="notes" data-index="06">我的笔记</button>
 </nav>
-<div class="sidebar-bottom"><span>文脈で、ことばを。</span><span id="pack-license"></span></div>
+<div class="sidebar-bottom"><span>文脈で、ことばを。</span><small id="pack-title"></small><small id="pack-license"></small></div>
 </aside>
 <div class="workspace">
 <header><div><h1>学习台 <span id="course-heading"></span></h1><p id="course-subtitle"></p></div>

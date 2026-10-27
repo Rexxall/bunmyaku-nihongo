@@ -33,3 +33,31 @@ rt.unverified,ruby.unverified rt{text-decoration:underline dotted #b48a3a;color:
 .tutor-open .word-grid,.tutor-open .grammar-grid{grid-template-columns:1fr}
 @media(max-width:1100px){.word-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
 @media(max-width:650px){.word-grid,.grammar-grid{grid-template-columns:1fr;gap:12px}}
+/* Detail pass (1.0.1): sidebar brand and course bar, small-screen tabs, blanks, ruby, floating button clearance. */
+@media(min-width:1101px){
+  .brand>div{min-width:0}
+  .brand small{display:block;white-space:normal;text-wrap:balance;line-height:1.5;letter-spacing:.12em;margin-top:2px}
+}
+.coursebar .course-count{font-variant-numeric:tabular-nums;letter-spacing:.06em;white-space:nowrap}
+.coursebar select{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.sidebar-bottom small{display:block;font-size:11px;line-height:1.6;color:#7d8f82}
+.workspace header p{text-wrap:pretty}
+.passage-title,.section-bar h2,.grammarcard h3,.workcard h3{text-wrap:balance}
+ruby{ruby-align:center}
+.inline-blank{white-space:nowrap}
+.exercise-card details.notes{margin-bottom:0}
+#words .workcard>.locate{grid-column:2/-1;justify-self:end;text-align:right;padding-right:0}
+main{padding-bottom:120px}
+@media(max-width:650px){
+  main{padding-bottom:104px}
+  .sidebar .tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+.workspace header p{word-break:keep-all;overflow-wrap:anywhere}
+.ex-question,.listen-line-ja p{text-wrap:pretty}
+/* The more-menu lives inside the header, so undo the header subtitle and summary styles it inherits. */
+.more-menu{width:220px}
+.more-menu button{white-space:nowrap}
+.workspace header .more-menu p{font-weight:400;font-size:11px;line-height:1.7;color:var(--muted);max-width:none;word-break:normal;text-wrap:pretty}
+.header-more .more-menu summary{list-style:revert;padding:4px 0;font-size:12px;color:var(--muted);min-height:0}
+.more-menu .course-context{margin:0 0 4px;padding:0}
+body:not(.hide-ruby) .detail h3:has(ruby)+.kana{display:none}

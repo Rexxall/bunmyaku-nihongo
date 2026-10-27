@@ -69,7 +69,7 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     assert.equal(await page.locator('#notes .note-card').count(), 1);
 
     // Two profiles: records are isolated and the select appears.
-    await page.locator('.header-more summary').click();
+    await page.locator('.header-more > summary').click();
     await page.locator('#profiles-edit').click();
     await page.locator('#profiles-text').fill('我\n友人');
     await page.locator('#profiles-save').click();
@@ -96,7 +96,7 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     assert.ok(keys.includes('bunmyaku:migrated-v1'));
 
     // Export produces a Markdown download.
-    const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.header-more summary').click().then(() => page.locator('#export').click())]);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.header-more > summary').click().then(() => page.locator('#export').click())]);
     assert.ok(download.suggestedFilename().endsWith('笔记.md'));
     for (const width of [820, 390]) {
       await page.setViewportSize({width, height: 1000});

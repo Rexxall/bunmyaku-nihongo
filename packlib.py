@@ -27,6 +27,13 @@ class PackError(ValueError):
     """Raised when a pack cannot be loaded at all (missing or unreadable files)."""
 
 
+def safe_console() -> None:
+    """Chinese messages must not crash a command whose output goes to a non-UTF-8 pipe (Windows)."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(errors='backslashreplace')
+
+
 def resolve_content_dir(arg: str | None = None) -> Path:
     """``--content`` argument > ``BUNMYAKU_CONTENT`` > bundled demo pack."""
     value = arg or os.environ.get('BUNMYAKU_CONTENT', '').strip()

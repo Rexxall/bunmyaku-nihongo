@@ -6,16 +6,33 @@ on:
 
 jobs:
   server:
-    runs-on: ubuntu-latest
+    name: server · ${{ matrix.os }} · Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ['3.9', '3.x']
+        exclude:
+          # No 3.9 build for the arm64 macOS runners; 3.9 is covered on Linux and Windows.
+          - os: macos-latest
+            python: '3.9'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python }}
       - name: Validate the demo pack
-        run: python3 tools/validate_pack.py examples/demo-pack --strict
-      - name: Server, release and tool tests
-        run: python3 -m unittest -v
+        run: python tools/validate_pack.py examples/demo-pack --strict
+      - name: Server, release, tool and launcher tests
+        run: python -m unittest -v
+      - name: Start script (macOS / Linux)
+        if: runner.os != 'Windows'
+        run: sh bunmyaku.command --version
+      - name: Start script (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: echo.| bunmyaku.bat --version
 
   browser:
     runs-on: ubuntu-latest

@@ -92,6 +92,7 @@ def build(args) -> tuple[dict, dict, list[str]]:
 
 
 def main(argv=None) -> int:
+    packlib.safe_console()
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--text', required=True, help='plain-text lesson, paragraphs separated by blank lines')
     parser.add_argument('--vocab', help='CSV word list (word, reading, meaning[, forms, simple, similar, memo])')

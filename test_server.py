@@ -228,3 +228,27 @@ class LauncherTest(unittest.TestCase):
         self.assertTrue((root / 'bunmyaku.command').exists())
         self.assertTrue((root / 'bunmyaku.bat').exists())
 
+    def test_module_launcher_serves_the_demo_pack(self):
+        root = Path(__file__).resolve().parent
+        env = dict(__import__('os').environ, PYTHONUNBUFFERED='1')  # keeps BUNMYAKU_CONTENT, as inside a release snapshot
+        expected_pack = packlib.load_pack(packlib.resolve_content_dir(None))['id']
+        process = subprocess.Popen([sys.executable, '-m', 'bunmyaku', '--port', '0'], cwd=root, env=env,
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
+        try:
+            address = None
+            for _ in range(20):
+                line = process.stdout.readline()
+                if line.startswith('Study page: '):
+                    address = line.split(': ', 1)[1].strip()
+                    break
+            self.assertIsNotNone(address, 'launcher printed the study address')
+            with urllib.request.urlopen(address + 'api/status', timeout=10) as r:
+                status = json.loads(r.read())
+            self.assertEqual(status['pack']['id'], expected_pack)
+            with urllib.request.urlopen(address, timeout=10) as r:
+                self.assertIn('Bunmyaku', r.read().decode('utf-8'))
+        finally:
+            process.terminate()
+            process.wait(timeout=10)
+            process.stdout.close()
+

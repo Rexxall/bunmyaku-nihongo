@@ -399,6 +399,7 @@ def make_server(bind: str, port: int, content: dict) -> ThreadingHTTPServer:
 
 
 def main(argv=None):
+    packlib.safe_console()
     parser = argparse.ArgumentParser(description='Bunmyaku local study server')
     parser.add_argument('--bind', default='127.0.0.1', help='address to listen on (use your LAN IP to study from a phone)')
     parser.add_argument('--port', type=int, default=8765)

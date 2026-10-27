@@ -78,7 +78,7 @@ loginctl enable-linger "$USER"      # 注销后继续运行
 launchctl load ~/Library/LaunchAgents/bunmyaku.plist
 ```
 
-**Windows**：任务计划程序新建任务，“登录时”触发，操作为 `python -m bunmyaku --content C:\path\to\my-pack`，起始于仓库目录；或直接把 `bunmyaku.bat` 的快捷方式放进启动文件夹。
+**Windows**：任务计划程序新建任务，“登录时”触发，操作为 `py -3 -m bunmyaku --content C:\path\to\my-pack`（没有 `py` 启动器时用 `python`），起始于仓库目录；或直接把 `bunmyaku.bat` 的快捷方式放进启动文件夹。
 
 ## 版本快照、发布与回退
 
@@ -166,7 +166,7 @@ node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node 
 
 `test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 六个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 
-浏览器测试需要 `npm install --no-save playwright@1.64.1 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），不发布任何东西。
+浏览器测试需要 `npm install --no-save playwright@1.64.1 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（macOS 的 GitHub 机器没有 3.9，只跑最新版），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
 
 ## 截图
 

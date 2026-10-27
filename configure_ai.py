@@ -12,6 +12,7 @@ import json
 import os
 import tempfile
 
+import packlib
 from serve import PRESETS, config_dir
 
 PATH = config_dir() / 'tutor.json'
@@ -29,7 +30,8 @@ def save(values: dict) -> None:
     PATH.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix='.tutor-', dir=PATH.parent)
     try:
-        os.fchmod(fd, 0o600)
+        if hasattr(os, 'fchmod'):  # POSIX only; on Windows the file inherits the user profile's ACL
+            os.fchmod(fd, 0o600)
         with os.fdopen(fd, 'w', encoding='utf-8') as f:
             json.dump(values, f, ensure_ascii=False, indent=2)
         os.replace(tmp, PATH)
@@ -89,6 +91,7 @@ def interactive() -> None:
 
 
 def main() -> None:
+    packlib.safe_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--show', action='store_true', help='print the current configuration with the key masked')
     parser.add_argument('--clear', action='store_true', help='delete the configuration file')

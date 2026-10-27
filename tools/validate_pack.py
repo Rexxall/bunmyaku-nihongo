@@ -336,6 +336,7 @@ def validate(pack_dir: Path) -> Report:
 
 
 def main(argv=None) -> int:
+    packlib.safe_console()
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('pack', nargs='?', help='course pack directory (default: BUNMYAKU_CONTENT or examples/demo-pack)')
     parser.add_argument('--strict', action='store_true', help='treat warnings as errors')

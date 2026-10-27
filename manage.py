@@ -3,8 +3,9 @@
 
 A release is a folder under .local/releases/<name> holding ``code/`` (this repository's
 sources), ``content/`` (a copy of the course pack) and ``materials/index.html`` (the page built
-from both), plus a SHA-256 manifest. ``publish`` switches an atomic ``current`` pointer and
-``run`` supervises a server that follows that pointer. Nothing here touches Git.
+from both), plus a SHA-256 manifest. ``publish`` switches an atomic ``current`` pointer (a small
+text file holding the release name, so it works on Windows without symlink rights) and ``run``
+supervises a server that follows that pointer. Nothing here touches Git.
 """
 import argparse
 import hashlib
@@ -27,6 +28,8 @@ CODE_FILES = ['serve.py', 'packlib.py', 'manage.py', 'configure_ai.py', 'bunmyak
               'test_pack_tools.py', 'README.md', 'LICENSE']
 PAGE = Path('materials/index.html')
 
+packlib.safe_console()  # release messages are Chinese; see packlib.safe_console
+
 
 def digest(p: Path) -> str:
     h = hashlib.sha256()
@@ -40,6 +43,17 @@ def release(name: str) -> Path:
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,79}', name):
         raise ValueError('版本名称只能包含英文字母、数字、点、横线和下划线')
     return RELEASES / name
+
+
+def current_release():
+    """The published release folder, or None. Older installs used a symlink; both are read."""
+    pointer = LOCAL / 'current'
+    if pointer.is_symlink():
+        return pointer.resolve()
+    if pointer.is_file():
+        name = pointer.read_text(encoding='utf-8').strip()
+        return release(name) if name else None
+    return None
 
 
 def build(code: Path, content: Path) -> str:
@@ -71,7 +85,7 @@ def create(name: str, content_dir: Path) -> None:
         target = temp / PAGE
         target.parent.mkdir(parents=True)
         target.write_text(build(temp / 'code', temp / 'content'), encoding='utf-8')
-        files = {str(p.relative_to(temp)): digest(p) for p in sorted(temp.rglob('*')) if p.is_file()}
+        files = {p.relative_to(temp).as_posix(): digest(p) for p in sorted(temp.rglob('*')) if p.is_file()}
         try:
             revision = subprocess.check_output(['git', '-C', str(BASE), 'rev-parse', 'HEAD'], text=True, stderr=subprocess.DEVNULL).strip()
         except (OSError, subprocess.SubprocessError):
@@ -90,7 +104,7 @@ def create(name: str, content_dir: Path) -> None:
 def verify(name: str) -> Path:
     folder = release(name)
     manifest = json.loads((folder / 'manifest.json').read_text(encoding='utf-8'))
-    actual = {str(p.relative_to(folder)) for p in folder.rglob('*') if p.is_file()} - {'manifest.json'}
+    actual = {p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file()} - {'manifest.json'}
     if actual != set(manifest['files']):
         raise ValueError('版本文件清单不匹配')
     for file, expected in manifest['files'].items():
@@ -108,20 +122,20 @@ def check(name: str) -> None:
     subprocess.run([sys.executable, '-m', 'unittest', '-q', 'test_server'], cwd=folder / 'code', env=env, check=True)
     checks = LOCAL / 'checks'
     checks.mkdir(exist_ok=True)
-    (checks / (name + '.sha256')).write_text(digest(folder / 'manifest.json'))
+    (checks / (name + '.sha256')).write_text(digest(folder / 'manifest.json'), encoding='utf-8')
     print('完整性与后端回归通过：' + name)
 
 
 def publish(name: str) -> None:
     folder = verify(name)
     stamp = LOCAL / 'checks' / (name + '.sha256')
-    if not stamp.exists() or stamp.read_text() != digest(folder / 'manifest.json'):
+    if not stamp.exists() or stamp.read_text(encoding='utf-8').strip() != digest(folder / 'manifest.json'):
         raise ValueError('必须先运行 check 验证这个版本')
-    current = LOCAL / 'current'
-    old = current.resolve().name if current.exists() else None
-    link = LOCAL / ('.current-' + str(os.getpid()))
-    link.symlink_to(folder)
-    os.replace(link, current)
+    previous = current_release()
+    old = previous.name if previous else None
+    pending = LOCAL / ('.current-' + str(os.getpid()))
+    pending.write_text(name + '\n', encoding='utf-8')
+    os.replace(pending, LOCAL / 'current')
     with (LOCAL / 'deployments.jsonl').open('a', encoding='utf-8') as f:
         f.write(json.dumps({'time': time.strftime('%Y-%m-%dT%H:%M:%S%z'), 'from': old, 'to': name}) + '\n')
     print('当前正式版本：' + name + '（运行中的管理服务会自动切换）')
@@ -139,8 +153,8 @@ def run(bind: str, port: int, name=None) -> None:
     signal.signal(signal.SIGINT, stop)
     try:
         while True:
-            target = release(name) if name else (LOCAL / 'current').resolve()
-            if not target.is_dir() or not (target / 'manifest.json').exists():
+            target = release(name) if name else current_release()
+            if target is None or not target.is_dir() or not (target / 'manifest.json').exists():
                 raise ValueError('还没有可运行的版本，请先 create、check、publish')
             if target != active:
                 verify(target.name)
@@ -183,7 +197,8 @@ def main() -> None:
         elif args.command == 'run':
             run(args.bind, args.port, args.release)
         else:
-            print('当前：' + ((LOCAL / 'current').resolve().name if (LOCAL / 'current').exists() else '尚未发布'))
+            published = current_release()
+            print('当前：' + (published.name if published else '尚未发布'))
             for p in sorted(RELEASES.glob('*/manifest.json')):
                 print(p.parent.name)
     except KeyboardInterrupt:

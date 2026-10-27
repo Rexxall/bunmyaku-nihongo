@@ -1,0 +1,5 @@
+# Keep line endings stable across systems: the Windows starter needs CRLF, shell scripts need LF.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.wav binary

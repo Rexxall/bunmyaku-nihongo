@@ -14,8 +14,14 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python: ['3.9', '3.x']
         exclude:
-          # No 3.9 build for the arm64 macOS runners; 3.9 is covered on Linux and Windows.
+          # Python 3.9 has no build for the arm64 macOS runners or for Ubuntu 26.04 (ubuntu-latest);
+          # it runs on Windows and on Ubuntu 24.04 instead.
           - os: macos-latest
+            python: '3.9'
+          - os: ubuntu-latest
+            python: '3.9'
+        include:
+          - os: ubuntu-24.04
             python: '3.9'
     steps:
       - uses: actions/checkout@v4

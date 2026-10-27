@@ -17,6 +17,7 @@ import re
 import secrets
 import sys
 import threading
+import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -24,6 +25,11 @@ from urllib.parse import unquote, urlsplit
 from urllib.request import Request, urlopen
 
 import packlib
+
+try:
+    from bunmyaku import __version__ as VERSION
+except ImportError:  # running serve.py from a copy without the package
+    VERSION = 'working-copy'
 
 BASE = Path(__file__).resolve().parent
 SRC = BASE / 'src'
@@ -218,7 +224,7 @@ class Handler(BaseHTTPRequestHandler):
             pack = self.content['pack']
             self.send_json(200, {'configured': config['configured'], 'preset': config['preset'], 'model': config['model'],
                                  'needs_key': config['needs_key'], 'token': TOKEN,
-                                 'version': os.environ.get('BUNMYAKU_VERSION', 'working-copy'),
+                                 'version': os.environ.get('BUNMYAKU_VERSION', VERSION),
                                  'pack': {'id': pack.get('id'), 'title': pack.get('title'), 'revision': pack.get('revision')}})
             return
         if path in ('/', '/index.html'):
@@ -397,6 +403,8 @@ def main(argv=None):
     parser.add_argument('--bind', default='127.0.0.1', help='address to listen on (use your LAN IP to study from a phone)')
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--content', help='course pack directory (default: BUNMYAKU_CONTENT or examples/demo-pack)')
+    parser.add_argument('--open', action='store_true', help='open the study page in the default browser once the server is up')
+    parser.add_argument('--version', action='version', version=f'Bunmyaku {VERSION}')
     args = parser.parse_args(argv)
     content_dir = packlib.resolve_content_dir(args.content)
     try:
@@ -408,6 +416,8 @@ def main(argv=None):
     print(f"Course pack: {content['pack'].get('title')} ({content_dir})", flush=True)
     print(f'Study page: http://{server.study_host}/', flush=True)
     print(f"Tutor: {'configured · ' + config['preset'] + ' · ' + config['model'] if config['configured'] else 'not configured (copy-prompt mode)'}", flush=True)
+    if args.open:
+        threading.Timer(0.5, webbrowser.open, [f'http://{server.study_host}/']).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

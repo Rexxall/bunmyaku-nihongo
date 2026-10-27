@@ -66,6 +66,7 @@ def create(name: str, content_dir: Path) -> None:
                 shutil.copy2(BASE / f, temp / 'code' / f)
         for f in (BASE / 'tools').glob('*.py'):
             shutil.copy2(f, temp / 'code/tools' / f.name)
+        shutil.copytree(BASE / 'bunmyaku', temp / 'code/bunmyaku', ignore=shutil.ignore_patterns('__pycache__'))
         shutil.copytree(content_dir, temp / 'content', ignore=shutil.ignore_patterns('.*', '__pycache__'))
         target = temp / PAGE
         target.parent.mkdir(parents=True)

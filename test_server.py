@@ -2,6 +2,8 @@
 import importlib.util
 import io
 import json
+import subprocess
+import sys
 import threading
 import unittest
 import urllib.error
@@ -212,3 +214,17 @@ class ConfigTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class LauncherTest(unittest.TestCase):
+    def test_module_launcher_reports_version_and_options(self):
+        root = Path(__file__).resolve().parent
+        out = subprocess.run([sys.executable, '-m', 'bunmyaku', '--version'], cwd=root, capture_output=True, text=True, check=True)
+        self.assertEqual(out.stdout.strip(), 'Bunmyaku ' + serve.VERSION)
+        # The launcher must also work when started from another directory.
+        out = subprocess.run([sys.executable, str(root / 'bunmyaku' / '__main__.py'), '--help'], cwd=root.parent, capture_output=True, text=True, check=True)
+        for option in ['--content', '--open', '--bind', '--port']:
+            self.assertIn(option, out.stdout)
+        self.assertTrue((root / 'bunmyaku.command').exists())
+        self.assertTrue((root / 'bunmyaku.bat').exists())
+

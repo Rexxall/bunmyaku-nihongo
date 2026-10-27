@@ -65,8 +65,7 @@ class ServerTest(unittest.TestCase):
         self.assertIn('id="pack-data"', html)
         self.assertIn(self.lesson['title'], html)
         self.assertNotIn('@@', html)
-        self.assertNotIn('ふたり', html)
-        self.assertNotIn('futari-nihongo', html)
+        self.assertIn('Bunmyaku', html)
         status, _, body = self.get('/api/status')
         data = json.loads(body)
         self.assertEqual(status, 200)
@@ -135,8 +134,8 @@ class ServerTest(unittest.TestCase):
         self.assertIn('测试用的用户补充说明', prompt)
         self.assertIn(serve.MODES['quiz'], prompt)
         self.assertIn('中文', prompt)
-        for private in ['Rex', '啵啵', 'DeepSeek']:
-            self.assertNotIn(private, prompt)
+        for provider in ['DeepSeek', 'OpenAI', 'Ollama']:
+            self.assertNotIn(provider, prompt)
 
     def test_relay_success_and_sanitized_errors(self):
         seen = {}

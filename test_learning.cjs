@@ -43,9 +43,9 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     await page.locator('#tutor-close').click();
 
     // Exercise reveal: inline fills and correct choices.
-    assert.equal(await page.locator('#exercises .inline-blank').count(), 1);
+    assert.equal(await page.locator('#exercises .inline-blank').count(), 2, 'two fill items in the demo lesson');
     await page.locator('#exercises [data-view="answers"]').click();
-    assert.equal(await page.locator('#exercises .inline-fill').count(), 1);
+    assert.equal(await page.locator('#exercises .inline-fill').count(), 2);
     assert.equal(await page.locator('#exercises .inline-fill').first().innerText(), 'とおり');
     await page.selectOption('#exercise-group', 'choice');
     assert.equal(await page.locator('#exercises .choice-list li.revealed[data-correct=true]').count(), 2, 'answers stay revealed across groups');

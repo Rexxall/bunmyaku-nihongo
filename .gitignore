@@ -1,0 +1,13 @@
+# Private course packs, snapshots and keys never enter Git.
+.local/
+content/
+*.local/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+tutor.json
+node_modules/
+package.json
+package-lock.json

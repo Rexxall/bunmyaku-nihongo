@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bunmyaku · 文脈</title>
+<style>@@SOURCE:base.css@@</style>
+<!-- Bundled Marked (MIT). Copyright (c) 2018+, MarkedJS; Copyright (c) 2011-2018, Christopher Jeffrey.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above
+copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
+<script>@@SOURCE:marked.js@@</script>
+<style id="study-theme">@@SOURCE:theme.css@@</style>
+<style id="app-style">@@SOURCE:app.css@@</style>
+</head><body>
+<aside class="sidebar">
+<div class="brand"><span class="brand-mark">文</span><div><strong>Bunmyaku</strong><small>LEARN JAPANESE IN CONTEXT</small></div></div>
+<div class="coursebar"><label for="course">正在读的课</label><select id="course" aria-label="选择课"></select><button id="prev-course" aria-label="上一课">←</button><span class="course-count" id="pack-title"></span><button id="next-course" aria-label="下一课">→</button></div>
+<nav class="tabs" role="tablist" aria-label="学习内容">
+<span class="nav-section" aria-hidden="true">课内学习</span>
+<button id="tab-read" role="tab" aria-controls="read" aria-selected="true" data-tab="read" data-index="01">课文阅读</button>
+<button id="tab-words" role="tab" aria-controls="words" aria-selected="false" data-tab="words" data-index="02">词汇</button>
+<button id="tab-grammar" role="tab" aria-controls="grammar" aria-selected="false" data-tab="grammar" data-index="03">语法</button>
+<button id="tab-exercises" role="tab" aria-controls="exercises" aria-selected="false" data-tab="exercises" data-index="04">练习</button>
+<button id="tab-listening" role="tab" aria-controls="listening" aria-selected="false" data-tab="listening" data-index="05">听力</button>
+<span class="nav-section" aria-hidden="true">记录</span>
+<button id="tab-notes" role="tab" aria-controls="notes" aria-selected="false" data-tab="notes" data-index="06">我的笔记</button>
+</nav>
+<div class="sidebar-bottom"><span>文脈で、ことばを。</span><span id="pack-license"></span></div>
+</aside>
+<div class="workspace">
+<header><div><h1>学习台 <span id="course-heading"></span></h1><p id="course-subtitle"></p></div>
+<div class="head-actions">
+<label class="global-ruby-switch" title="全站日语文字注音"><input id="ruby-toggle" type="checkbox" checked><span>假名</span></label>
+<label id="learner-control">学习者 <select id="learner" aria-label="学习档案"></select></label>
+<details class="header-more"><summary aria-label="更多选项">•••</summary><div class="more-menu">
+<details class="course-context"><summary>课程说明</summary><p id="course-status"></p></details>
+<button id="profiles-edit">学习档案…</button>
+<button id="export">导出笔记（Markdown）</button>
+<button id="print">打印当前页</button>
+<p class="storage-note">笔记按学习档案保存在当前浏览器；需要备份时导出。课程内容来自本机课程包。</p>
+<span id="save-status" role="status"></span>
+</div></details>
+</div></header>
+<main>
+<p class="print-name" id="print-name"></p>
+<section id="read" role="tabpanel" aria-labelledby="tab-read">
+<div class="section-bar"><h2>课文</h2><div class="bar-controls"><label><input id="vocab-toggle" type="checkbox" checked><span class="legend-word">词汇高亮</span></label><label><input id="grammar-toggle" type="checkbox" checked><span class="legend-grammar">语法下划线</span></label><button id="translation-open">对照译文 ↗</button></div></div>
+<div class="reading-grid"><article class="paper"><h2 id="passage-heading" class="passage-title" lang="ja"></h2><p class="source" id="passage-source"></p><div id="passage" class="passage" lang="ja"></div><p class="intro-note" id="passage-note"></p></article>
+<div id="detail-shell" class="detail-shell"><div class="detail-cap"><span>READING COMPANION · 随读解释</span><button id="detail-close">完成 ×</button></div><aside id="detail" class="detail" aria-label="选中词解释"></aside></div></div>
+</section>
+<section id="words" role="tabpanel" aria-labelledby="tab-words" hidden>
+<div class="section-bar"><h2>词汇</h2><div class="bar-controls"><input id="search" type="search" placeholder="日语、假名或译文" aria-label="查找词条"><span id="note-progress" role="status"></span><button id="hide-refs">收起释义</button></div></div>
+<div id="word-grid" class="word-grid"></div>
+</section>
+<section id="grammar" role="tabpanel" aria-labelledby="tab-grammar" hidden>
+<div class="section-bar"><h2>语法</h2></div><div id="grammar-grid" class="grammar-grid"></div>
+</section>
+<section id="exercises" role="tabpanel" aria-labelledby="tab-exercises" hidden></section>
+<section id="listening" role="tabpanel" aria-labelledby="tab-listening" hidden></section>
+<section id="notes" role="tabpanel" aria-labelledby="tab-notes" hidden></section>
+</main></div>
+<button id="tutor-open" class="primary">问老师</button>
+<button id="detail-backdrop" aria-label="关闭词语解释" tabindex="-1"></button>
+<dialog id="translation-dialog" aria-labelledby="translation-title"><div class="dialogbar"><h2 id="translation-title"></h2><button id="translation-close" autofocus>关闭</button></div><p class="minor" id="translation-note">译文供学习参考。先试着理解，再按需对照。</p><label><input id="parallel" type="checkbox" checked>原文与译文逐段对照</label><div id="translation-content"></div></dialog>
+<dialog id="profiles-dialog" aria-labelledby="profiles-title"><div class="dialogbar"><h2 id="profiles-title">学习档案</h2><button id="profiles-close">关闭</button></div><p class="minor">一行一个名字。一个人学就留一行；两个人结伴学可以各写一个，笔记、答题和听力进度分开保存。</p><textarea id="profiles-text" rows="4" aria-label="学习档案名，一行一个"></textarea><div class="toolbar"><button id="profiles-save" class="primary">保存</button><button id="profiles-reset" type="button">恢复课程包默认</button></div></dialog>
+<aside id="tutor-dialog" aria-labelledby="tutor-title" hidden>
+<div id="tutor-resize" role="separator" tabindex="0" aria-label="调整问答栏宽度，方向键微调，双击恢复" aria-orientation="vertical" aria-controls="tutor-dialog" title="拖动调宽 · 双击恢复"></div>
+<div class="dialogbar"><h2 id="tutor-title">✧ 答疑</h2><button id="tutor-close" aria-label="关闭问答栏">×</button></div>
+<p id="tutor-context"></p>
+<div id="tutor-selection" hidden><div><span>选中内容</span><button id="selection-clear" aria-label="清除选中内容">×</button></div><blockquote id="selection-text"></blockquote></div>
+<div id="tutor-suggestions" aria-label="推荐问题"></div>
+<div id="tutor-messages" aria-live="polite"></div>
+<form id="tutor-form"><label class="sr-only" for="tutor-mode">回答方式</label><select id="tutor-mode"><option value="explain">讲解与例子</option><option value="hint">只给提示</option><option value="quiz">出题考我</option></select><label class="sr-only" for="tutor-question">你的问题</label><textarea id="tutor-question" maxlength="4000" required placeholder="选中课文里的词句，或直接提问…"></textarea><div class="toolbar"><button id="tutor-send" type="submit" class="primary">发送 ↑</button><button id="tutor-copy" type="button" hidden>复制提示词</button><button id="tutor-cancel" type="button" hidden>取消</button><button id="tutor-clear" type="button">清空对话</button></div></form>
+<p id="tutor-result" role="status"></p>
+<details class="tutor-settings"><summary>连接与隐私</summary><p class="minor" id="tutor-status" role="status"></p><button id="tutor-recheck">重新检查</button><p class="minor">发送时只提交问题、选中文字、当前课的已校对文字和最近对话；音频不会发送。按你自己的 API 账户计费。没有配置密钥时，可以复制提示词贴到任何聊天工具。</p></details>
+</aside>
+<div id="toast" role="status" hidden></div>
+<script id="pack-data" type="application/json">@@PACK@@</script>
+<script>@@SOURCE:app.js@@</script>
+</body></html>

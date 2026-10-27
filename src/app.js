@@ -500,7 +500,8 @@ function renderListening() {
 function installPlayer(item) {
   const a = $('listen-audio'), owner = learner, key = `${course}:${item.id}`;
   let loopA = null, loopB = null, replayEnd = null, replayStart = null;
-  const status = t => { $('listen-audio-status').hidden = !t; $('listen-audio-status').textContent = t; };
+  // Audio events can arrive after the learner has switched lesson or panel; a detached player stays silent.
+  const status = t => { const el = $('listen-audio-status'); if (!a.isConnected || !el) return; el.hidden = !t; el.textContent = t; };
   const update = () => {
     $('listen-loop-label').textContent = loopA === null ? '' : loopB === null ? 'A ' + clock(loopA) : clock(loopA) + ' – ' + clock(loopB);
     $('listen-loop-save').disabled = loopB === null;
@@ -514,7 +515,7 @@ function installPlayer(item) {
     $('listen-clips').querySelectorAll('[data-remove-clip]').forEach(b => b.onclick = () => { list.splice(Number(b.dataset.removeClip), 1); saveAudioState(owner, key, {clips: list}); clips(); });
   };
   const savePosition = () => { if (Number.isFinite(a.currentTime) && Number.isFinite(a.duration)) { saveAudioState(owner, key, {time: a.currentTime >= a.duration - .5 ? 0 : a.currentTime}); saveAudioState(owner, 'settings', {speed: a.playbackRate}); } };
-  const playLabel = () => { $('listen-play').textContent = a.paused ? '▶ 继续' : 'Ⅱ 暂停'; $('listen-play').setAttribute('aria-label', a.paused ? '继续播放' : '暂停'); };
+  const playLabel = () => { if (!a.isConnected || !$('listen-play')) return; $('listen-play').textContent = a.paused ? '▶ 继续' : 'Ⅱ 暂停'; $('listen-play').setAttribute('aria-label', a.paused ? '继续播放' : '暂停'); };
   const play = () => a.play().then(() => status('')).catch(e => { if (e.name !== 'AbortError') status('请再点播放继续。'); });
   const seek = delta => { if (!Number.isFinite(a.duration)) return; replayEnd = replayStart = null; a.currentTime = Math.min(loopB ?? a.duration, Math.max(loopA ?? 0, a.currentTime + delta)); };
   a.playbackRate = SPEEDS.includes(audioRecord(owner, 'settings').speed) ? audioRecord(owner, 'settings').speed : 1;

@@ -43,3 +43,4 @@ jobs:
           node test_browser.cjs
           node test_learning.cjs
           node test_resume.cjs
+          node test_layout.cjs

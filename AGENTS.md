@@ -4,7 +4,7 @@
 
 ## 仓库约定
 
-- 运行：`python3 serve.py`（默认演示包）；测试：`python3 -m unittest`，浏览器测试 `node test_*.cjs`（需要 Playwright，见 `docs/development.md`）。
+- 运行：`python3 -m bunmyaku`（默认演示包，`python3 serve.py` 等价）；测试：`python3 -m unittest`，浏览器测试 `node test_*.cjs`（需要 Playwright，见 `docs/development.md`）。
 - 服务端无第三方依赖；前端不引入构建工具；新功能先改课程包格式说明再改代码。
 - 版权教材内容、私人课程包、密钥永远不进仓库：私人包放仓库外，用 `--content` 指向。`.gitignore` 里的 `content/`、`.local/`、`tutor.json` 不要去掉。
 - 提交信息一行，说明做了什么。README 与代码不写开发过程说明。

@@ -23,7 +23,7 @@ import packlib
 BASE = Path(__file__).resolve().parent
 LOCAL = BASE / '.local'
 RELEASES = LOCAL / 'releases'
-CODE_FILES = ['serve.py', 'packlib.py', 'manage.py', 'configure_ai.py', 'test_server.py', 'test_releases.py',
+CODE_FILES = ['serve.py', 'packlib.py', 'manage.py', 'configure_ai.py', 'bunmyaku.command', 'bunmyaku.bat', 'test_server.py', 'test_releases.py',
               'test_pack_tools.py', 'README.md', 'LICENSE']
 PAGE = Path('materials/index.html')
 

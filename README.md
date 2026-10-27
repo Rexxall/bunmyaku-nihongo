@@ -6,7 +6,9 @@
 
 Learn Japanese in context · 课文阅读 · 词汇辨析 · 听力精听 · 带上下文的答疑
 
-[三分钟跑起来](#三分钟跑起来) · [课程包格式](docs/pack-format.md) · [让 agent 帮你做课程包](#让-agent-帮你做课程包) · [开发文档](docs/development.md)
+中文 · [日本語](README.ja.md) · [English](README.en.md)
+
+[三分钟跑起来](#三分钟跑起来) · [课程包格式](docs/pack-format.md) · [让 agent 帮你做课程包](#让-agent-帮你做课程包) · [部署与开发](docs/development.md)
 
 </div>
 
@@ -38,10 +40,10 @@ Bunmyaku 是一个本地网页工具。它不内置教材；你（或你的 AI a
 ```sh
 git clone https://github.com/Rexxall/bunmyaku-nihongo.git
 cd bunmyaku-nihongo
-python3 serve.py
+python3 -m bunmyaku --open
 ```
 
-打开 <http://127.0.0.1:8765/> 就是两课原创演示课程（CC0）。想在手机上用，把 `--bind` 改成电脑的局域网 IP。
+浏览器会打开 <http://127.0.0.1:8765/>，里面是两课原创演示课程（CC0）。不想敲命令的话，双击仓库里的 `bunmyaku.command`（macOS／Linux）或 `bunmyaku.bat`（Windows）效果相同。想在手机上用，加 `--bind` 指定电脑的局域网 IP。
 
 **接上答疑**（可选）：
 
@@ -49,12 +51,12 @@ python3 serve.py
 python3 configure_ai.py
 ```
 
-选一个预设：任意 OpenAI 兼容端点、DeepSeek、OpenAI，或本机 Ollama（不需要密钥）。不配置也能用——答疑栏会把问题和本课资料拼成一段提示词，复制到任何聊天工具里即可。服务端发给模型的内容见 [答疑上下文协议](docs/tutor-protocol.md)。
+选一个预设：任意 OpenAI 兼容端点、DeepSeek、OpenAI，或本机 Ollama（不需要密钥）。不配置也能用：答疑栏会把问题和本课资料拼成一段提示词，复制到任何聊天工具里即可。服务端发给模型的内容见 [答疑上下文协议](docs/tutor-protocol.md)。
 
 **换成自己的材料**：
 
 ```sh
-python3 serve.py --content ~/my-pack
+python3 -m bunmyaku --content ~/my-pack
 ```
 
 课程包就是一个文件夹：`pack.json` ＋ `lessons/*.json` ＋ 可选 `media/`。字段说明见 [课程包格式](docs/pack-format.md)，`examples/demo-pack/` 是完整样例。
@@ -80,6 +82,7 @@ python3 tools/import_text.py --text 课文.txt --vocab 词表.csv --out my-pack 
 ## 项目结构
 
 ```text
+bunmyaku/           python3 -m bunmyaku 启动入口与版本号
 serve.py            本地 HTTP 服务与答疑转发
 packlib.py          课程包加载
 manage.py           版本快照、校验、发布与回退
@@ -87,7 +90,7 @@ configure_ai.py     答疑接口配置
 src/                页面骨架、交互逻辑与样式
 tools/              课程包校验器与导入器
 examples/demo-pack  原创演示课程包（CC0）
-docs/               格式说明、答疑协议、开发文档
+docs/               格式说明、答疑协议、部署与开发、难点与踩坑
 test_*              服务端、发布流程、工具与浏览器测试
 ```
 

@@ -1,0 +1,25 @@
+{
+  "format": "bunmyaku-pack",
+  "version": 1,
+  "id": "demo-pack",
+  "title": "Bunmyaku 演示课程",
+  "revision": "2026-10-27",
+  "language": "ja",
+  "translation_language": "zh",
+  "license": "CC0-1.0",
+  "author": "Bunmyaku contributors",
+  "description": "两课原创中级日文课文，用来演示 Bunmyaku 的课程包格式：课文、译文、词条、语法、练习与听力。文字内容以 CC0 发布，可自由修改和再分发。",
+  "source": {
+    "title": "原创演示文本",
+    "note": "不含任何出版教材的内容。"
+  },
+  "profiles": ["我"],
+  "tutor": {
+    "persona": "学习者正在用原创演示课文练习中级日语精读。",
+    "learner_note": ""
+  },
+  "lessons": [
+    { "id": "01", "file": "lessons/01.json" },
+    { "id": "02", "file": "lessons/02.json" }
+  ]
+}

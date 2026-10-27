@@ -54,8 +54,10 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     await page.locator('#exercises [data-view="hints"]').click();
     assert.ok(await page.locator('#hint-choice-1').isVisible());
 
+    const openNotes = () => page.evaluate(() => document.querySelectorAll('details.notes').forEach(d => { d.open = true; }));
     // Notes per profile and persistence.
     await page.locator('#tab-words').click();
+    await openNotes();
     await page.locator('#answer-v1').fill('事情のこと');
     await page.locator('[data-done="v1"]').check();
     await page.reload();
@@ -75,6 +77,7 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     await page.selectOption('#learner', '友人');
     await page.locator('#tab-words').click();
     assert.equal(await page.inputValue('#answer-v1'), '');
+    await openNotes();
     await page.locator('#answer-v1').fill('友人のメモ');
     await page.selectOption('#learner', '我');
     assert.equal(await page.inputValue('#answer-v1'), '事情のこと');

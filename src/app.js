@@ -6,6 +6,8 @@
 const PACK = JSON.parse(document.getElementById('pack-data').textContent);
 const PACK_ID = String(PACK.id || 'pack');
 const LESSONS = PACK.lessons.map(l => ({...l, id: String(l.id)}));
+// Set by tools/export_static.py: the page is served as plain files, without /api.
+const STATIC_DEMO = document.documentElement.dataset.static === '1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const KANJI = /[一-龯々〆〇]/u;
@@ -478,7 +480,7 @@ function renderListening() {
   if (!items.some(x => x.id === listeningId)) listeningId = items[0].id;
   const at = items.findIndex(x => x.id === listeningId), item = items[at];
   const speed = audioRecord(learner, 'settings').speed, rate = SPEEDS.includes(speed) ? speed : 1;
-  const player = item.audio ? `<div class="listen-player"><div class="listen-player-top"><select id="listen-speed" aria-label="播放速度">${SPEEDS.map(v => `<option value="${v}" ${v === rate ? 'selected' : ''}>${v}×</option>`).join('')}</select><button id="listen-loop-a" title="把当前位置设为循环起点">A</button><button id="listen-loop-b" title="把当前位置设为循环终点，开始循环">B</button><button id="listen-loop-clear" class="icon-btn" title="清除循环" aria-label="清除循环">↺</button><button id="listen-loop-save" class="icon-btn" title="保存当前循环片段" aria-label="保存当前循环片段" disabled>＋</button><span id="listen-loop-label" class="minor" aria-live="polite"></span></div><div class="listen-transport" role="group" aria-label="精听操作"><button id="listen-back" aria-label="回退5秒">−5s</button><button id="listen-play" class="primary" aria-label="播放" aria-keyshortcuts="Space">▶ 播放</button><button id="listen-replay" title="重听刚才5秒，播完暂停（R）" aria-keyshortcuts="R">↶ 重听</button><button id="listen-forward" aria-label="前进5秒">+5s</button></div><audio id="listen-audio" controls preload="metadata" src="${esc('/' + item.audio)}" aria-label="${esc(item.title)}"></audio><div id="listen-clips" class="listen-clips"></div><p id="listen-audio-status" class="minor" role="status" hidden></p>${item.audio_status === 'placeholder' ? '<p class="minor">这条音频是占位音，用来演示播放器。</p>' : ''}</div>` : `<div class="listen-no-audio">本条没有音频，只有文稿。${item.note ? esc(item.note) : ''}</div>`;
+  const player = item.audio ? `<div class="listen-player"><div class="listen-player-top"><select id="listen-speed" aria-label="播放速度">${SPEEDS.map(v => `<option value="${v}" ${v === rate ? 'selected' : ''}>${v}×</option>`).join('')}</select><button id="listen-loop-a" title="把当前位置设为循环起点">A</button><button id="listen-loop-b" title="把当前位置设为循环终点，开始循环">B</button><button id="listen-loop-clear" class="icon-btn" title="清除循环" aria-label="清除循环">↺</button><button id="listen-loop-save" class="icon-btn" title="保存当前循环片段" aria-label="保存当前循环片段" disabled>＋</button><span id="listen-loop-label" class="minor" aria-live="polite"></span></div><div class="listen-transport" role="group" aria-label="精听操作"><button id="listen-back" aria-label="回退5秒">−5s</button><button id="listen-play" class="primary" aria-label="播放" aria-keyshortcuts="Space">▶ 播放</button><button id="listen-replay" title="重听刚才5秒，播完暂停（R）" aria-keyshortcuts="R">↶ 重听</button><button id="listen-forward" aria-label="前进5秒">+5s</button></div><audio id="listen-audio" controls preload="metadata" src="${esc(item.audio)}" aria-label="${esc(item.title)}"></audio><div id="listen-clips" class="listen-clips"></div><p id="listen-audio-status" class="minor" role="status" hidden></p>${item.audio_status === 'placeholder' ? '<p class="minor">这条音频是占位音，用来演示播放器。</p>' : ''}</div>` : `<div class="listen-no-audio">本条没有音频，只有文稿。${item.note ? esc(item.note) : ''}</div>`;
   $('listening').innerHTML = `<div class="section-bar"><h2>听力</h2><div class="bar-controls"><select id="listen-item" aria-label="听力条目">${items.map(x => `<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('')}</select><div class="button-pair"><button id="listen-prev" aria-label="上一条">←</button><button id="listen-next" aria-label="下一条">→</button></div><span class="listen-view-icons"><button id="listen-transcript-toggle"></button><button id="listen-translation-toggle"></button></span>${item.questions?.length ? viewButtons() : ''}</div></div>${player}<div class="listen-study-text"><div class="listen-study-title"><h3 lang="ja">${esc(item.title)}</h3></div>${item.intro ? `<p class="listen-context" lang="ja">${esc(item.intro)}</p>` : ''}<div class="listen-transcript">${(item.lines || []).map((l, i) => `<article class="listen-transcript-row" id="line-${esc(item.id)}-${i}"><div class="listen-line-ja"><span class="listen-speaker">${esc(l.speaker || String(i + 1).padStart(2, '0'))}</span><p lang="ja">${rubyHTML(l.text, l.ruby, l.ruby_status)}</p><button class="icon-btn" data-ask-line="${esc(l.text)}" aria-label="问这一句">✧</button></div>${l.translation ? `<p class="listen-study-translation">${esc(l.translation)}</p>` : ''}${l.note ? `<p class="listen-study-analysis">${esc(l.note)}</p>` : ''}</article>`).join('')}</div>${item.questions?.length ? `<h4>题目</h4><div id="listen-questions">${item.questions.map((q, i) => exerciseCard(q, i, exerciseView.answers)).join('')}</div>` : ''}</div>`;
   $('listen-item').value = listeningId;
   $('listen-item').onchange = e => { listeningId = e.target.value; renderListening(); tutorRefresh(); };
@@ -669,11 +671,12 @@ function tutorRender() {
   $('tutor-suggestions').querySelectorAll('button').forEach(b => b.onclick = () => { $('tutor-question').value = b.textContent.replace(/ ↗$/, ''); $('tutor-question').focus(); });
   $('tutor-context').textContent = `${L.title}${tutorSection === 'listening' ? ' · 听力' : ''} · ${learner}${tutorItem && tutorItemLabel() ? ' · ' + tutorItemLabel() : ''}${tutorSelection ? ' · 已附选中文字' : ''}`;
   $('tutor-messages').innerHTML = chat().map(m => `<div class="chat-message ${m.role}"><strong class="chat-author">${m.role === 'user' ? '我' : '老师'}</strong><div class="chat-content">${m.role === 'assistant' ? tutorMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div></div>`).join('');
-  $('tutor-send').disabled = tutorBusy; $('tutor-cancel').hidden = !tutorBusy;
+  $('tutor-send').disabled = tutorBusy || STATIC_DEMO; $('tutor-cancel').hidden = !tutorBusy;
   const copyMode = tutorConfigured === false;
   $('tutor-dialog').classList.toggle('copy-mode', copyMode); $('tutor-copy').hidden = !copyMode;
 }
 async function tutorStatus() {
+  if (STATIC_DEMO) { tutorConfigured = null; $('tutor-status').textContent = '这是在线演示页，没有本机服务，答疑不可用。把仓库下载到本机运行 python3 -m bunmyaku 即可提问。'; tutorRender(); return; }
   try {
     const r = await fetch('/api/status', {cache: 'no-store'}); if (!r.ok) throw Error();
     const a = await r.json(); tutorToken = a.token; tutorConfigured = a.configured === true;
@@ -719,6 +722,7 @@ $('tutor-copy').onclick = async () => {
 };
 $('tutor-form').onsubmit = async e => {
   e.preventDefault();
+  if (STATIC_DEMO) return;
   if (tutorConfigured === false) { $('tutor-copy').click(); return; }
   const question = $('tutor-question').value.trim(); if (!question || tutorBusy) return;
   const key = chatKey(), messages = chat(), body = requestBody(question);

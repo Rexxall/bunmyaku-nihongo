@@ -140,6 +140,16 @@ python3 tools/validate_pack.py examples/demo-pack --strict
 python3 tools/import_text.py --text 课文.txt --vocab 词表.csv --out ~/my-pack --id my-pack
 ```
 
+## 在线演示（静态页）
+
+`tools/export_static.py` 把课程包导出成纯静态页面：一个 `index.html`（与服务端拼出的页面相同，另加静态标记）加上课程包引用的音频。阅读、词汇、语法、练习、听力和笔记照常可用；答疑需要本机服务，静态页里显示为不可用。
+
+```sh
+python3 tools/export_static.py examples/demo-pack --out _site
+```
+
+仓库的 `.github/workflows/pages.yml` 在每次推送到 main 时导出演示包并发布到 GitHub Pages（需在仓库设置里把 Pages 来源设为 GitHub Actions）。只导出你有权公开的内容：版权教材和私人课程包不要导出到公开站点。
+
 ## 目录
 
 ```text
@@ -149,7 +159,7 @@ packlib.py          课程包加载：解析 pack.json、内联各课、生成�
 manage.py           版本快照、校验、发布、回退与监督运行
 configure_ai.py     答疑接口配置（端点、模型、密钥）
 src/                page.html 骨架、app.js、三份样式、marked.js（MIT）
-tools/              validate_pack.py 校验器、import_text.py 导入器、占位音频脚本
+tools/              validate_pack.py 校验器、import_text.py 导入器、export_static.py 静态导出、占位音频脚本
 examples/demo-pack  原创演示课程包（CC0）
 docs/               格式说明、答疑协议、本页、难点与踩坑、截图
 test_*.py / *.cjs   服务端、发布流程、工具、浏览器测试
@@ -166,7 +176,7 @@ node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node 
 
 `test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 六个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 
-浏览器测试需要 `npm install --no-save playwright@1.64.1 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（GitHub 的 macOS 与最新 Ubuntu 机器没有 3.9 安装包，3.9 在 Windows 和 Ubuntu 24.04 上跑），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
+浏览器测试需要 `npm install --no-save playwright@1.64.1 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），这个工作流不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（GitHub 的 macOS 与最新 Ubuntu 机器没有 3.9 安装包，3.9 在 Windows 和 Ubuntu 24.04 上跑），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
 
 ## 截图
 
@@ -177,5 +187,7 @@ node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node 
   --window-size=1440,1000 --virtual-time-budget=5000 --screenshot=docs/assets/study-reading.png \
   "http://127.0.0.1:8765/#lesson=01&panel=read&word=v8"
 ```
+
+`study-mobile.png` 是三张 390×844、两倍像素的手机截图（课文、词条卡、听力）并排拼成；`social-preview.png`（1280×640）是仓库的分享预览图，在 GitHub 仓库设置的 Social preview 里上传。
 
 页面支持 `#lesson=`、`panel=`（read／words／grammar／exercises／listening／notes）、`word=`、`answers=1`、`tutor=选中文字` 深链接。截图不得出现版权教材页面、个人笔记或密钥。

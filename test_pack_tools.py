@@ -10,6 +10,7 @@ from pathlib import Path
 import packlib
 
 sys.path.insert(0, str(Path(__file__).with_name('tools')))
+import export_static  # noqa: E402
 import import_text  # noqa: E402
 import validate_pack  # noqa: E402
 
@@ -132,6 +133,21 @@ class Importer(unittest.TestCase):
             rep = validate_pack.validate(out)
             self.assertEqual(rep.errors, [], rep.errors)
             self.assertTrue(any('缺少注音' in w for w in rep.warnings))
+
+
+
+class StaticExport(unittest.TestCase):
+    def test_demo_pack_exports_page_and_audio(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'site'
+            written = export_static.export(packlib.DEFAULT_CONTENT, out)
+            page = (out / 'index.html').read_text(encoding='utf-8')
+            self.assertIn('data-static="1"', page)
+            self.assertNotIn('@@', page)
+            self.assertIn('"id": "demo-pack"', page)
+            self.assertTrue((out / 'media' / '02-counter.wav').is_file())
+            self.assertEqual(len(written), 2)
+            self.assertFalse(any(p.suffix == '.json' for p in out.rglob('*')))
 
 
 if __name__ == '__main__':

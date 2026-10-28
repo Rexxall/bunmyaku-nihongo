@@ -29,6 +29,7 @@ python3 -m bunmyaku --open
 - 服务端只用 Python 标准库，支持 Python 3.9 及以上；前端不引入构建工具，页面由 `src/page.html` 在内存里拼装。
 - 改课程包格式时，先改 [docs/pack-format.md](docs/pack-format.md) 和校验器，再改代码。
 - 改样式或页面结构后跑 `test_layout.cjs`：它会在每课 × 八种宽度 × 六个面板下检查横向滚动、文字溢出和标签折行。
+- 改颜色、按钮或弹出层后跑 `test_a11y.cjs`：axe-core 无障碍扫描加键盘焦点路径。新按钮要有能读出来的文字，文字颜色对比度至少 4.5:1。
 - 提交信息写一行英文，说明做了什么，例如 `Fix ruby spacing in vocabulary cards`。
 
 提交 PR 前在本机跑：
@@ -37,10 +38,10 @@ python3 -m bunmyaku --open
 python3 -m unittest -v
 python3 tools/validate_pack.py examples/demo-pack --strict
 python3 -m bunmyaku --port 8766 &
-node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs
+node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs && node test_a11y.cjs
 ```
 
-浏览器测试需要 Playwright，安装方法见 [部署与开发](docs/development.md#测试)。GitHub Actions 会在 Linux、Windows、macOS 和 Python 3.9／最新版上再跑一遍。
+浏览器测试需要 Playwright 和 axe-core，安装方法见 [部署与开发](docs/development.md#测试)。GitHub Actions 会在 Linux、Windows、macOS 和 Python 3.9／最新版上再跑一遍。
 
 ## 贡献课程包
 

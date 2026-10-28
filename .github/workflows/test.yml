@@ -50,10 +50,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Playwright
+      - name: Install Playwright and axe-core
         run: |
           npm init -y >/dev/null
-          npm install --no-save playwright@1.64.1
+          npm install --no-save playwright@1.64.1 axe-core@4.10.3
           npx playwright install --with-deps chromium
       - name: Start the demo server
         run: |
@@ -67,3 +67,4 @@ jobs:
           node test_learning.cjs
           node test_resume.cjs
           node test_layout.cjs
+          node test_a11y.cjs

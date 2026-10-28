@@ -171,12 +171,14 @@ test_*.py / *.cjs   服务端、发布流程、工具、浏览器测试
 python3 -m unittest -v                 # 服务端、发布流程、工具、启动入口
 python3 tools/validate_pack.py examples/demo-pack --strict
 python3 -m bunmyaku --port 8766 &      # 浏览器测试默认访问这个端口
-node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs
+node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs && node test_a11y.cjs
 ```
 
 `test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 六个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 
-浏览器测试需要 `npm install --no-save playwright@1.64.1 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），这个工作流不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（GitHub 的 macOS 与最新 Ubuntu 机器没有 3.9 安装包，3.9 在 Windows 和 Ubuntu 24.04 上跑），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
+`test_a11y.cjs` 用 axe-core 按 WCAG 2.2 A／AA 和通用最佳实践扫描：每课 × 六个面板，宽屏和手机宽度各一遍，另扫词条抽屉、答疑栏、显示答案、右上角菜单和两个对话框；再走一遍键盘路径：第一下 Tab 到“跳到学习内容”、面板标签用方向键切换、词条抽屉打开时焦点进入、按 Esc 回到原词、语法“在正文中定位”把焦点移到正文、答疑栏打开时焦点进输入框、关闭后回到“问老师”。
+
+浏览器测试需要 `npm install --no-save playwright@1.64.1 axe-core@4.10.3 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），这个工作流不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（GitHub 的 macOS 与最新 Ubuntu 机器没有 3.9 安装包，3.9 在 Windows 和 Ubuntu 24.04 上跑），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
 
 ## 截图
 

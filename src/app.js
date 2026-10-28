@@ -259,12 +259,12 @@ function annotateParagraph(p) {
     const range = ranges.find(r => r.start <= seg.start && r.end >= seg.end) || null;
     if ((range && range.id) !== (openGrammar && openGrammar.id)) {
       closeGrammar();
-      if (range) { openGrammar = range; out += `<span class="grammar" role="button" tabindex="0" data-grammar="${esc(range.id)}" aria-label="语法 ${esc(range.g.name)}">`; }
+      if (range) { openGrammar = range; out += `<span class="grammar" tabindex="-1" data-grammar="${esc(range.id)}" title="语法：${esc(range.g.name)}">`; }
     }
     const ids = [...new Set(hits.filter(h => h.start <= seg.start && h.end >= seg.end).sort((x, y) => (y.end - y.start) - (x.end - x.start)).map(h => h.id))].join(',');
     if (ids !== openIds) {
       closeWord();
-      if (ids) { openIds = ids; out += `<button type="button" class="word" data-ids="${esc(ids)}" aria-label="查看词条解释">`; }
+      if (ids) { openIds = ids; out += `<button type="button" class="word" data-ids="${esc(ids)}">`; }
     }
     out += seg.html;
   }
@@ -286,9 +286,7 @@ $('passage').addEventListener('click', ev => {
   const w = ev.target.closest('[data-ids]'), g = ev.target.closest('[data-grammar]');
   if (w) selectEntry(w.dataset.ids.split(',')[0], w); else if (g) selectGrammar(g.dataset.grammar, g);
 });
-$('passage').addEventListener('keydown', ev => {
-  if (ev.target.matches('[data-grammar]') && ['Enter', ' '].includes(ev.key)) { ev.preventDefault(); selectGrammar(ev.target.dataset.grammar, ev.target); }
-});
+// Grammar underlines are mouse targets only (words inside them are buttons); keyboard users open grammar from the buttons under each paragraph.
 function simpleBlock(e) {
   return e.simple ? `<p class="field-label">简单日语解释</p><div class="jp" lang="ja">${esc(e.simple)}</div>` : '';
 }
@@ -699,10 +697,12 @@ function openTutor(options = {}) {
   tutorItem = options.itemId || (tutorSection === 'listening' ? (listeningId || '') : '');
   tutorSelection = options.selection ?? (options.itemId ? '' : (selection || tutorSelection));
   tutorRender(); $('tutor-dialog').hidden = false; document.body.classList.add('tutor-open'); tutorStatus();
+  // Move focus into the panel (it covers the page on phones); touch screens get the close button so no keyboard pops up.
+  (matchMedia('(pointer:coarse)').matches ? $('tutor-close') : $('tutor-question')).focus({preventScroll: true});
   if (options.prompt) $('tutor-question').value = options.prompt;
 }
 $('tutor-open').onclick = () => openTutor();
-$('tutor-close').onclick = () => { $('tutor-dialog').hidden = true; document.body.classList.remove('tutor-open'); };
+$('tutor-close').onclick = () => { const inside = $('tutor-dialog').contains(document.activeElement); $('tutor-dialog').hidden = true; document.body.classList.remove('tutor-open'); if (inside) $('tutor-open').focus(); };
 $('tutor-recheck').onclick = tutorStatus;
 $('selection-clear').onclick = () => { tutorSelection = ''; tutorRender(); };
 $('tutor-clear').onclick = () => { if (tutorBusy) return; delete tutorChats[chatKey()]; tutorItem = ''; tutorSelection = ''; tutorRender(); };

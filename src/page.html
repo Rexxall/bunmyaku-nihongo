@@ -12,6 +12,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <style id="study-theme">@@SOURCE:theme.css@@</style>
 <style id="app-style">@@SOURCE:app.css@@</style>
 </head><body>
+<a class="skip-link" href="#main">跳到学习内容</a>
 <aside class="sidebar">
 <div class="brand"><span class="brand-mark">文</span><div><strong>Bunmyaku</strong><small>LEARN JAPANESE IN CONTEXT</small></div></div>
 <div class="coursebar"><label for="course">正在读的课</label><select id="course" aria-label="选择课"></select><button id="prev-course" aria-label="上一课">←</button><span class="course-count" id="course-position" aria-live="polite"></span><button id="next-course" aria-label="下一课">→</button></div>
@@ -41,7 +42,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <span id="save-status" role="status"></span>
 </div></details>
 </div></header>
-<main>
+<main id="main" tabindex="-1">
 <p class="print-name" id="print-name"></p>
 <section id="read" role="tabpanel" aria-labelledby="tab-read">
 <div class="section-bar"><h2>课文</h2><div class="bar-controls"><label><input id="vocab-toggle" type="checkbox" checked><span class="legend-word">词汇高亮</span></label><label><input id="grammar-toggle" type="checkbox" checked><span class="legend-grammar">语法下划线</span></label><button id="translation-open">对照译文 ↗</button></div></div>

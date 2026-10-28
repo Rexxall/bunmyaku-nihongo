@@ -330,6 +330,7 @@ main{padding-top:18px}
 .chat-message strong{font-size:10px;letter-spacing:.08em}
 #tutor-form{flex-shrink:0;border-top:1px solid var(--line);padding-top:12px}
 #tutor-form select{font-size:11px;padding:5px 8px;background:transparent}
+#tutor-prompt-out:not([hidden]){display:block;width:100%;min-height:120px;max-height:30vh;margin:4px 0 10px;padding:10px;font-size:12px;border:1px solid var(--line);border-radius:8px;resize:vertical}
 #tutor-question{min-height:85px;margin:8px 0;font-size:13px;border-color:var(--line);resize:vertical;max-height:170px}
 #tutor-form .toolbar{margin:0;gap:8px}
 #tutor-form button{font-size:12px;min-height:35px}

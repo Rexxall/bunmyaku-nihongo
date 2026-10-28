@@ -73,6 +73,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <div id="tutor-messages" aria-live="polite"></div>
 <form id="tutor-form"><label class="sr-only" for="tutor-mode">回答方式</label><select id="tutor-mode"><option value="explain">讲解与例子</option><option value="hint">只给提示</option><option value="quiz">出题考我</option></select><label class="sr-only" for="tutor-question">你的问题</label><textarea id="tutor-question" maxlength="4000" required placeholder="选中课文里的词句，或直接提问…"></textarea><div class="toolbar"><button id="tutor-send" type="submit" class="primary">发送 ↑</button><button id="tutor-copy" type="button" hidden>复制提示词</button><button id="tutor-cancel" type="button" hidden>取消</button><button id="tutor-clear" type="button">清空对话</button></div></form>
 <p id="tutor-result" role="status"></p>
+<textarea id="tutor-prompt-out" readonly hidden aria-label="提示词全文"></textarea>
 <details class="tutor-settings"><summary>连接与隐私</summary><p class="minor" id="tutor-status" role="status"></p><button id="tutor-recheck">重新检查</button><p class="minor">发送时只提交问题、选中文字、当前课的已校对文字和最近对话；音频不会发送。按你自己的 API 账户计费。没有配置密钥时，可以复制提示词贴到任何聊天工具。</p></details>
 </aside>
 <div id="toast" role="status" hidden></div>

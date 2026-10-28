@@ -30,6 +30,30 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     assert.equal(calls, 0);
     await page.locator('#tutor-close').click();
 
+    // A phone on http://192.168.x.x is not a secure context: no navigator.clipboard. Fall back to execCommand,
+    // and when that is refused too, show the prompt selected for manual copying.
+    for (const execWorks of [true, false]) {
+      const insecure = await browser.newPage({viewport: {width: 390, height: 844}});
+      insecure.on('pageerror', e => errors.push(e.message));
+      await insecure.route('**/api/status', r => r.fulfill({json: {configured: false, token: 'mock', model: 'mock', preset: 'test', pack: {id: 'demo-pack'}}}));
+      await insecure.route('**/api/prompt', r => r.fulfill({json: {prompt: '模拟提示词'}}));
+      await insecure.addInitScript(works => {
+        Object.defineProperty(Navigator.prototype, 'clipboard', {get: () => undefined});
+        Object.defineProperty(window, 'isSecureContext', {get: () => false});
+        document.execCommand = () => works;
+      }, execWorks);
+      await insecure.goto(url);
+      await insecure.locator('#tutor-open').click();
+      await insecure.waitForFunction(() => tutorConfigured === false);
+      await insecure.locator('#tutor-question').fill('この文の意味は？');
+      await insecure.locator('#tutor-copy').click();
+      await insecure.waitForFunction(() => document.querySelector('#tutor-result').textContent.length > 0);
+      const shown = await insecure.locator('#tutor-prompt-out').isVisible();
+      assert.equal(shown, !execWorks, `manual copy box ${execWorks ? 'hidden after fallback copy' : 'shown when copying is refused'}`);
+      if (!execWorks) assert.equal(await insecure.evaluate(() => { const o = document.getElementById('tutor-prompt-out'); return document.activeElement === o && o.selectionEnd - o.selectionStart === o.value.length; }), true, 'prompt selected for manual copy');
+      await insecure.close();
+    }
+
     // Relay mode once configured.
     configured = true;
     await page.locator('#tab-exercises').click();
@@ -103,7 +127,7 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     }
     assert.deepEqual(errors, []);
-    console.log('PASS: copy-prompt mode, relay, exercise reveal, notes per profile, migration, export.');
+    console.log('PASS: copy-prompt mode (with clipboard fallback), relay, exercise reveal, notes per profile, migration, export.');
   } finally {
     await browser.close();
   }

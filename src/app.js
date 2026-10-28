@@ -705,10 +705,18 @@ $('tutor-open').onclick = () => openTutor();
 $('tutor-close').onclick = () => { const inside = $('tutor-dialog').contains(document.activeElement); $('tutor-dialog').hidden = true; document.body.classList.remove('tutor-open'); if (inside) $('tutor-open').focus(); };
 $('tutor-recheck').onclick = tutorStatus;
 $('selection-clear').onclick = () => { tutorSelection = ''; tutorRender(); };
-$('tutor-clear').onclick = () => { if (tutorBusy) return; delete tutorChats[chatKey()]; tutorItem = ''; tutorSelection = ''; tutorRender(); };
+$('tutor-clear').onclick = () => { if (tutorBusy) return; delete tutorChats[chatKey()]; tutorItem = ''; tutorSelection = ''; $('tutor-prompt-out').hidden = true; tutorRender(); };
 $('tutor-cancel').onclick = () => tutorController?.abort();
 function requestBody(question) {
   return {lesson: course, section: tutorSection, itemId: tutorItem, question, history: chat().slice(-8), mode: $('tutor-mode').value, selection: tutorSelection};
+}
+// navigator.clipboard exists only in secure contexts (https, localhost); a phone on http://192.168.x.x has none.
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) { try { await navigator.clipboard.writeText(text); return true; } catch {} }
+  const area = document.createElement('textarea'); area.value = text; area.setAttribute('readonly', ''); area.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.append(area); area.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch {}
+  area.remove(); return ok;
 }
 $('tutor-copy').onclick = async () => {
   const question = $('tutor-question').value.trim(); if (!question || tutorBusy) { notify('先写下你的问题。'); return; }
@@ -716,8 +724,9 @@ $('tutor-copy').onclick = async () => {
     if (!tutorToken) await tutorStatus();
     const response = await fetch('/api/prompt', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Study-Token': tutorToken}, body: JSON.stringify(requestBody(question))});
     const result = await response.json(); if (!response.ok) throw Error(result.error || '请求失败');
-    await navigator.clipboard.writeText(result.prompt);
-    $('tutor-result').textContent = '提示词已复制，可贴到任何聊天工具；回答不会自动回到这里。';
+    const out = $('tutor-prompt-out');
+    if (await copyText(result.prompt)) { out.hidden = true; $('tutor-result').textContent = '提示词已复制，可贴到任何聊天工具；回答不会自动回到这里。'; }
+    else { out.value = result.prompt; out.hidden = false; out.focus(); out.select(); $('tutor-result').textContent = '浏览器不允许自动复制：提示词已在下方选中，请手动复制。'; }
   } catch (err) { $('tutor-result').textContent = err.message; }
 };
 $('tutor-form').onsubmit = async e => {

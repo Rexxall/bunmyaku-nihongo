@@ -8,7 +8,7 @@ Learn Japanese in context · 课文阅读 · 词汇辨析 · 听力精听 · 带
 
 中文 · [日本語](README.ja.md) · [English](README.en.md)
 
-[三分钟跑起来](#三分钟跑起来) · [课程包格式](docs/pack-format.md) · [让 agent 帮你做课程包](#让-agent-帮你做课程包) · [部署与开发](docs/development.md)
+[在线试用](https://rexxall.github.io/bunmyaku-nihongo/) · [三分钟跑起来](#三分钟跑起来) · [课程包格式](docs/pack-format.md) · [让 agent 帮你做课程包](#让-agent-帮你做课程包) · [部署与开发](docs/development.md)
 
 </div>
 
@@ -33,7 +33,11 @@ Bunmyaku 是一个本地网页工具。它不内置教材；你（或你的 AI a
 
 ![练习与答疑：原位答案、选中文字带入提问、无密钥时复制提示词](docs/assets/study-tutor.png)
 
+![手机上：课文注音、词条卡、听力播放器](docs/assets/study-mobile.png)
+
 ## 三分钟跑起来
+
+不想安装，先点 [在线试用](https://rexxall.github.io/bunmyaku-nihongo/) 看演示课程：阅读、词汇、练习、听力和笔记都能用，答疑需要在本机运行。
 
 需要 Python 3.9 或更新版本，不需要安装任何依赖。
 
@@ -88,11 +92,15 @@ packlib.py          课程包加载
 manage.py           版本快照、校验、发布与回退
 configure_ai.py     答疑接口配置
 src/                页面骨架、交互逻辑与样式
-tools/              课程包校验器与导入器
+tools/              课程包校验器、导入器与静态导出
 examples/demo-pack  原创演示课程包（CC0）
 docs/               格式说明、答疑协议、部署与开发、难点与踩坑
 test_*              服务端、发布流程、工具与浏览器测试
 ```
+
+## 参与贡献
+
+报错、建议和代码都欢迎，先看 [CONTRIBUTING.md](CONTRIBUTING.md)。版权教材内容不要贴进 issue 或 PR。
 
 ## 许可证
 

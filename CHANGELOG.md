@@ -2,6 +2,9 @@
 
 ## 未发布
 
+- 在线演示：`tools/export_static.py` 把课程包导出成静态页面（答疑显示为不可用），`.github/workflows/pages.yml` 把演示包发布到 GitHub Pages；README 加“在线试用”链接。听力音频改用相对路径，部署在子路径下也能播放。
+- 新增 `CONTRIBUTING.md`、issue 模板（问题、功能建议、课程包格式）和 PR 模板。
+- README 加手机截图（课文、词条卡、听力）；新增仓库分享预览图 `docs/assets/social-preview.png`。
 - 新增布局回归测试 `test_layout.cjs`：每课 × 八种宽度 × 六个面板（宽屏时答疑栏开关各一次），检查横向滚动、文字溢出、超出侧栏或卡片、界面标签折行、填空横线被拆开，以及右上角菜单的收起；已加入 GitHub Actions。
 - CI 改为矩阵：服务端、发布流程、工具与启动入口测试在 Linux、Windows、macOS 上跑，Python 3.9 与最新版；实际运行两个启动脚本。新增启动入口冒烟测试（真正起服务、取页面和状态）。
 - Windows 修复：发布快照的“当前版本”指针改为文本文件，不再需要建符号链接的权限（旧的符号链接仍可读取）；快照清单统一用 `/` 路径；答疑配置在 Windows 上不再调用只有 Unix 才有的改权限函数；文本读写一律写明 UTF-8。

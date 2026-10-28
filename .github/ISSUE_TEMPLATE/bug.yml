@@ -1,0 +1,55 @@
+name: 报告问题 · Bug report
+description: 页面、服务端、工具或启动脚本出错 · Something does not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请不要贴版权教材内容、API 密钥、`tutor.json` 或私人笔记；复现请用演示课程包。
+        Please do not paste copyrighted textbook content, API keys or private notes. Reproduce with the demo pack if you can.
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么 · What happened
+      description: 期望的结果和实际结果 · Expected vs. actual
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 · Steps to reproduce
+      description: 能给深链接最好，例如 `http://127.0.0.1:8765/#lesson=02&panel=listening`
+      placeholder: |
+        1.
+        2.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本 · Version
+      description: "`python3 -m bunmyaku --version` 的输出"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境 · Environment
+      placeholder: macOS 15 / Python 3.12 / Chrome 140
+    validations:
+      required: true
+  - type: dropdown
+    id: pack
+    attributes:
+      label: 课程包 · Course pack
+      options:
+        - 演示课程包 · demo pack
+        - 自己的课程包 · my own pack
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 报错与输出 · Errors and output
+      description: 终端输出、浏览器控制台报错，或 `python3 tools/validate_pack.py <目录>` 的结果
+      render: text

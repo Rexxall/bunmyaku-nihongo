@@ -1,0 +1,26 @@
+name: 课程包格式与工具 · Pack format and tools
+description: 格式说明不清、校验器误报、导入器问题 · Unclear spec, validator or importer issues
+labels: [pack-format]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        只贴最小的原创片段，不要贴版权教材原文。Only paste a minimal original snippet, never copyrighted text.
+  - type: textarea
+    id: question
+    attributes:
+      label: 问题 · Question or problem
+      description: 涉及 docs/pack-format.md 的哪一节、哪个字段 · Which section or field
+    validations:
+      required: true
+  - type: textarea
+    id: snippet
+    attributes:
+      label: 最小片段 · Minimal snippet
+      render: json
+  - type: textarea
+    id: validator
+    attributes:
+      label: 校验器输出 · Validator output
+      description: "`python3 tools/validate_pack.py <目录>`"
+      render: text

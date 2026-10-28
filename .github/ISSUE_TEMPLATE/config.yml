@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 课程包格式说明 · Pack format
+    url: https://github.com/Rexxall/bunmyaku-nihongo/blob/main/docs/pack-format.md
+    about: 字段、注音写法和状态标记 · Fields, furigana syntax and status values
+  - name: 部署与开发 · Deploy and develop
+    url: https://github.com/Rexxall/bunmyaku-nihongo/blob/main/docs/development.md
+    about: 局域网、常驻服务、快照回退、测试 · LAN, service, snapshots, tests

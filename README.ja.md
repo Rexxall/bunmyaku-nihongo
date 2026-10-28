@@ -8,7 +8,7 @@ Learn Japanese in context · 本文精読 · 語彙 · 聴解 · 文脈を知っ
 
 [中文](README.md) · 日本語 · [English](README.en.md)
 
-[3 分で動かす](#3-分で動かす) · [コースパック形式](docs/pack-format.md) · [エージェントにパックを作らせる](#エージェントにコースパックを作らせる) · [配置と開発](docs/development.md)
+[オンラインで試す](https://rexxall.github.io/bunmyaku-nihongo/) · [3 分で動かす](#3-分で動かす) · [コースパック形式](docs/pack-format.md) · [エージェントにパックを作らせる](#エージェントにコースパックを作らせる) · [配置と開発](docs/development.md)
 
 </div>
 
@@ -33,7 +33,11 @@ Bunmyaku はローカルで動く Web アプリです。教科書は同梱して
 
 ![練習と質問：その場の答え、選択したテキストを質問に、キーなしのプロンプトコピー](docs/assets/study-tutor.png)
 
+![スマートフォン：ふりがな付きの本文、語彙カード、聴解プレーヤー](docs/assets/study-mobile.png)
+
 ## 3 分で動かす
+
+インストールの前に [オンラインで試す](https://rexxall.github.io/bunmyaku-nihongo/) こともできます。デモ課で精読・語彙・練習・聴解・ノートが使えます。チューターは手元で動かしたときだけ使えます。
 
 Python 3.9 以上。インストールするものはありません。
 
@@ -88,11 +92,15 @@ packlib.py          コースパックの読み込み
 manage.py           スナップショット、検査、公開、ロールバック
 configure_ai.py     チューター接続の設定
 src/                ページの骨組み、動作、スタイル
-tools/              パックのバリデータとインポータ
+tools/              パックのバリデータ、インポータ、静的書き出し
 examples/demo-pack  オリジナルのデモパック（CC0）
 docs/               形式、プロトコル、配置、設計メモ
 test_*              サーバー、リリース、ツール、ブラウザのテスト
 ```
+
+## コントリビュート
+
+不具合の報告、提案、コードを歓迎します。まず [CONTRIBUTING.md](CONTRIBUTING.md)（中国語、英語・日本語での投稿も可）をご覧ください。著作権のある教材の内容は issue や PR に貼らないでください。
 
 ## ライセンス
 

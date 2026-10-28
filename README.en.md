@@ -8,7 +8,7 @@ Learn Japanese in context · reading · vocabulary · listening · a tutor that 
 
 [中文](README.md) · [日本語](README.ja.md) · English
 
-[Three-minute start](#three-minute-start) · [Pack format](docs/pack-format.md) · [Let an agent build packs](#let-an-agent-build-course-packs) · [Deploy and develop](docs/development.md)
+[Try it online](https://rexxall.github.io/bunmyaku-nihongo/) · [Three-minute start](#three-minute-start) · [Pack format](docs/pack-format.md) · [Let an agent build packs](#let-an-agent-build-course-packs) · [Deploy and develop](docs/development.md)
 
 </div>
 
@@ -33,7 +33,11 @@ The server is a single Python standard-library script. No database, no account, 
 
 ![Exercises and tutor: answers in place, selected text carried into the question, copy-prompt mode without a key](docs/assets/study-tutor.png)
 
+![On a phone: reading with furigana, a vocabulary card, the listening player](docs/assets/study-mobile.png)
+
 ## Three-minute start
+
+To look before installing, [try it online](https://rexxall.github.io/bunmyaku-nihongo/) with the demo lessons: reading, vocabulary, exercises, listening and notes all work; the tutor needs a local run.
 
 Python 3.9 or newer. Nothing to install.
 
@@ -88,11 +92,15 @@ packlib.py          course pack loader
 manage.py           release snapshots, checks, publish and rollback
 configure_ai.py     tutor endpoint configuration
 src/                page skeleton, behaviour and styles
-tools/              pack validator and importer
+tools/              pack validator, importer and static export
 examples/demo-pack  original demo pack (CC0)
 docs/               format, tutor protocol, deployment, design notes
 test_*              server, release, tool and browser tests
 ```
+
+## Contributing
+
+Bug reports, ideas and code are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) (written in Chinese; issues in English or Japanese are fine). Please never paste copyrighted textbook content into issues or PRs.
 
 ## License
 

@@ -1,0 +1,22 @@
+name: 功能建议 · Feature request
+description: 学习时缺了什么 · Something you miss while studying
+labels: [enhancement]
+body:
+  - type: textarea
+    id: situation
+    attributes:
+      label: 学习场景 · When does this come up
+      description: 你在读、查、练、听或问的哪一步卡住了 · What were you trying to do
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: 希望怎样 · What would help
+    validations:
+      required: true
+  - type: textarea
+    id: pack
+    attributes:
+      label: 对课程包格式的影响 · Pack format impact
+      description: 需要新字段吗？已有课程包还能用吗？ · New fields? Do existing packs keep working?

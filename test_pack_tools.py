@@ -2,9 +2,11 @@
 import copy
 import json
 import shutil
+import sqlite3
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 import packlib
@@ -134,6 +136,52 @@ class Importer(unittest.TestCase):
             self.assertEqual(rep.errors, [], rep.errors)
             self.assertTrue(any('缺少注音' in w for w in rep.warnings))
 
+    def import_words(self, tmp: Path, vocab: Path, *extra: str, errors: int = 0) -> list[dict]:
+        (tmp / 'lesson.txt').write_text('毎朝、公園を歩く。日本語を勉強する。\n', encoding='utf-8')
+        out = tmp / 'out'
+        code = import_text.main(['--text', str(tmp / 'lesson.txt'), '--vocab', str(vocab), *extra, '--out', str(out), '--id', 'anki', '--license', 'CC0-1.0'])
+        self.assertEqual(code, 0)
+        self.assertEqual(len(validate_pack.validate(out).errors), errors)
+        return packlib.load_pack(out)['lessons'][0]['vocabulary']
+
+    def test_anki_plain_text_export(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            deck = tmp / 'deck.txt'
+            deck.write_text('#separator:tab\n#html:true\n#columns:Expression\tMeaning\tAudio\n'
+                            ' 公園[こうえん]\t公园<br>park\t[sound:a.mp3]\n'
+                            ' 日本[にほん] 語[ご]\t日语&amp;日本话\t\n', encoding='utf-8')
+            words = self.import_words(tmp, deck, '--map', 'word=Expression,meaning=Meaning')
+            self.assertEqual([(w['word'], w['reading'], w['meaning']) for w in words],
+                             [('公園', 'こうえん', '公园／park'), ('日本語', 'にほんご', '日语&日本话')])
+            self.assertEqual({w['reading_status'] for w in words}, {'unverified'})
+
+    def test_legacy_apkg(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            db_path = tmp / 'collection.anki2'
+            db = sqlite3.connect(db_path)
+            db.execute('create table col (models text)')
+            db.execute('create table notes (id integer, mid integer, flds text)')
+            model = {'1': {'flds': [{'name': 'Reading', 'ord': 1}, {'name': 'Front', 'ord': 0}, {'name': 'Back', 'ord': 2}]}}
+            db.execute('insert into col values (?)', (json.dumps(model),))
+            db.executemany('insert into notes values (?, 1, ?)', [(1, '歩く\x1fあるく\x1f走路'), (2, '公園\x1f\x1f公园')])
+            db.commit(); db.close()
+            apkg = tmp / 'deck.apkg'
+            with zipfile.ZipFile(apkg, 'w') as z:
+                z.write(db_path, 'collection.anki2')
+                z.writestr('media', '{}')
+            words = self.import_words(tmp, apkg, '--map', 'word=Front,reading=Reading,meaning=Back', errors=1)  # 公園 has no reading: the importer never guesses one
+            self.assertEqual([(w['word'], w['reading'], w['meaning']) for w in words], [('歩く', 'あるく', '走路'), ('公園', '', '公园')])
+
+    def test_new_apkg_format_explains_the_way_out(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            apkg = Path(tmp) / 'deck.apkg'
+            with zipfile.ZipFile(apkg, 'w') as z:
+                z.writestr('collection.anki21b', b'zstd')
+            with self.assertRaises(SystemExit) as caught:
+                import_text.read_vocab(apkg, '')
+            self.assertIn('Support older Anki versions', str(caught.exception))
 
 
 class StaticExport(unittest.TestCase):

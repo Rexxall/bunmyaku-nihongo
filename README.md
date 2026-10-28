@@ -25,7 +25,7 @@ Bunmyaku 是一个本地网页工具。它不内置教材；你（或你的 AI a
 | 练习 | 填空原位显示答案、选择题标出正确项、改写与开放题；提示／答案／讲解分别开关 |
 | 听力 | 播放、变速、±5 秒、重听、A/B 循环与片段保存；逐行文稿与译文可分别隐藏 |
 | 答疑 | 选中任何词句提问，服务端只把本课已校对文字送给模型；没有密钥也能复制提示词 |
-| 记录 | 笔记、作答、听力进度按学习档案保存在浏览器；一人学默认一个档案，结伴学可加人；导出 Markdown |
+| 记录 | 笔记、作答、听力进度按学习档案保存在浏览器；一人学默认一个档案，结伴学可加人；导出 Markdown，生词连同原文例句和自己的解释可导出给 Anki |
 
 服务端是一个 Python 标准库脚本，没有数据库、账号或云端。内容来自本机文件夹，密钥留在本机，答疑按你自己的 API 账户计费。
 
@@ -75,6 +75,8 @@ python3 -m bunmyaku --content ~/my-pack
 python3 tools/validate_pack.py my-pack          # 结构、引用、注音覆盖率、练习答案
 python3 tools/import_text.py --text 课文.txt --vocab 词表.csv --out my-pack --id my-pack   # 纯文本 → 最小课程包
 ```
+
+词表也可以直接用 Anki 的牌组：导出“Notes in Plain Text”（.txt），或勾选“Support older Anki versions”导出 .apkg，再用 `--map word=1,reading=2,meaning=3` 指明哪一列是什么。Anki 式注音 `日本[にほん]語[ご]` 会拆成词和读音。
 
 ## 数据与隐私
 

@@ -25,7 +25,7 @@ Bunmyaku is a local web app. It ships no textbook. You (or your AI agent) arrang
 | Exercises | Fill-in answers shown in place, correct choices marked, rewriting and open questions; hints, answers and explanations toggle separately |
 | Listening | Play, change speed, ±5 s, replay, A/B loop and saved segments; transcript lines and translations hide independently |
 | Tutor | Select any word or sentence and ask; the server sends the model only the proofread text of the current lesson. No API key? Copy the assembled prompt instead |
-| Records | Notes, answers and listening progress are saved in the browser per learner profile; one profile by default, more if you study with someone; export to Markdown |
+| Records | Notes, answers and listening progress are saved in the browser per learner profile; one profile by default, more if you study with someone; export to Markdown, and vocabulary to Anki with the sentence it came from and your own explanation |
 
 The server is a single Python standard-library script. No database, no account, no cloud. Content comes from a folder on your machine, keys stay on your machine, and tutor calls are billed to your own API account.
 
@@ -75,6 +75,8 @@ Two local tools support this:
 python3 tools/validate_pack.py my-pack          # structure, references, furigana coverage, exercise answers
 python3 tools/import_text.py --text lesson.txt --vocab words.csv --out my-pack --id my-pack   # plain text → minimal pack
 ```
+
+An Anki deck works as the word list too: export "Notes in Plain Text" (.txt), or an .apkg with "Support older Anki versions" ticked, and say which field is which with `--map word=1,reading=2,meaning=3`. Anki-style furigana `日本[にほん]語[ご]` is split into word and reading.
 
 ## Data and privacy
 

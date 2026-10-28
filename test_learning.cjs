@@ -122,12 +122,29 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     // Export produces a Markdown download.
     const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.header-more > summary').click().then(() => page.locator('#export').click())]);
     assert.ok(download.suggestedFilename().endsWith('笔记.md'));
+
+    await page.locator('#tab-words').click();
+    await openNotes();
+    await page.locator('#answer-v1').fill('自分の説明');
+    // Anki export: header lines Anki reads, one note per word, the sentence it appears in, the learner's own text.
+    const [ankiFile] = await Promise.all([page.waitForEvent('download'), page.locator('.header-more > summary').click().then(() => page.locator('#export-anki').click())]);
+    assert.ok(ankiFile.suggestedFilename().endsWith('_demo-pack_01_anki.txt'));
+    const anki = require('fs').readFileSync(await ankiFile.path(), 'utf8').trimEnd().split('\n');
+    const words = await page.evaluate(() => LESSONS.find(l => l.id === '01').vocabulary);
+    assert.deepEqual(anki.slice(0, 4), ['#separator:tab', '#html:false', '#columns:词\t读音\t释义\t原文例句\t我的解释\t出处\tTags', '#tags column:7']);
+    assert.equal(anki.length, 4 + words.length);
+    const rows = anki.slice(4).map(line => line.split('\t'));
+    assert.ok(rows.every(r => r.length === 7 && r[3] && r[6].startsWith('bunmyaku::demo-pack::01')), 'every note has a sentence and tags');
+    assert.equal(rows[0][0], words[0].word);
+    assert.ok(rows[0][4]);
+    assert.equal(rows[0][4], await page.evaluate(id => record('v:' + id).text || '', words[0].id));
+    assert.ok(rows.every((r, i) => (words[i].forms || [words[i].word]).some(f => r[3].includes(f))), 'sentence contains the word');
     for (const width of [820, 390]) {
       await page.setViewportSize({width, height: 1000});
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     }
     assert.deepEqual(errors, []);
-    console.log('PASS: copy-prompt mode (with clipboard fallback), relay, exercise reveal, notes per profile, migration, export.');
+    console.log('PASS: copy-prompt mode (with clipboard fallback), relay, exercise reveal, notes per profile, migration, Markdown and Anki export.');
   } finally {
     await browser.close();
   }

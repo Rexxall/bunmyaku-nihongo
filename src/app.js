@@ -563,6 +563,35 @@ $('export').onclick = () => {
   a.href = url; a.download = `${date}_${learner}_${L.title}_笔记.md`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   notify('已导出笔记。');
 };
+// Anki "Notes in Plain Text" import file (Anki 2.1.54+ reads the # headers): one note per word of this lesson,
+// with the sentence it appears in, the learner's own explanation and tags for the pack, lesson and known words.
+function exampleSentence(e) {
+  const sentences = (L.paragraphs || []).flatMap(p => p.sentences?.length ? p.sentences.map(s => s.text) : p.text.split(/(?<=[。！？])/));
+  const forms = (e.forms && e.forms.length ? e.forms : [e.word]);
+  return (sentences.find(s => forms.some(f => s.includes(f))) || '').trim();
+}
+function ankiField(value) {
+  const v = String(value ?? '').replace(/[\t\r\n]+/g, ' ').trim();
+  return /["]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+function ankiExport() {
+  const tag = s => String(s).replace(/\s+/g, '_');
+  const lines = ['#separator:tab', '#html:false', '#columns:词\t读音\t释义\t原文例句\t我的解释\t出处\tTags', '#tags column:7'];
+  for (const e of vocab()) {
+    const r = record('v:' + e.id), m = e.meaning || {};
+    const meaning = typeof m === 'string' ? m : [m[PACK.translation_language], ...Object.entries(m).filter(([k]) => k !== PACK.translation_language).map(([, v]) => v)].filter(Boolean).join(' · ');
+    const tags = [`bunmyaku::${tag(PACK_ID)}::${tag(L.id)}`, ...(r.done ? ['bunmyaku::known'] : [])].join(' ');
+    lines.push([e.word, e.reading, meaning, exampleSentence(e), r.text, `${PACK.title || PACK_ID} · ${L.title}`, tags].map(ankiField).join('\t'));
+  }
+  return lines.join('\n') + '\n';
+}
+$('export-anki').onclick = () => {
+  if (!vocab().length) { notify('本课没有词条。'); return; }
+  const date = new Date().toLocaleDateString('sv-SE');
+  const url = URL.createObjectURL(new Blob([ankiExport()], {type: 'text/plain;charset=utf-8'})), a = document.createElement('a');
+  a.href = url; a.download = `${date}_${PACK_ID}_${L.id}_anki.txt`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  notify(`已导出 ${vocab().length} 个词：在 Anki 里选“文件 → 导入”，字段按列名对应。`);
+};
 $('print').onclick = () => window.print();
 
 // The header menu closes after an action, on Escape, and on a click elsewhere.

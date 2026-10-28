@@ -110,7 +110,7 @@ python3 -m unittest -q              # 可选：确认这台机器上一切正常
 | --- | --- |
 | 课程包 | 你用 `--content` 指向的目录 |
 | 答疑配置（含密钥） | macOS `~/Library/Application Support/bunmyaku/tutor.json`；Linux `$XDG_CONFIG_HOME/bunmyaku/tutor.json`；Windows `%APPDATA%\bunmyaku\tutor.json` |
-| 学习记录 | 在浏览器的 localStorage 里，按课程包、课、档案分键；页面“我的笔记”可导出 Markdown |
+| 学习记录 | 在浏览器的 localStorage 里，按课程包、课、档案分键；右上角菜单可导出 Markdown 笔记，或把本课生词导出成 Anki 可直接导入的文本 |
 
 `.local/releases/` 是本机快照，不是异地备份。
 
@@ -138,7 +138,12 @@ python3 configure_ai.py --clear  # 删除
 ```sh
 python3 tools/validate_pack.py examples/demo-pack --strict
 python3 tools/import_text.py --text 课文.txt --vocab 词表.csv --out ~/my-pack --id my-pack
+python3 tools/import_text.py --text 课文.txt --vocab 牌组.txt --map word=1,reading=2,meaning=3 --out ~/my-pack --id my-pack
 ```
+
+**Anki 词表。** `--vocab` 认三种文件：带表头的 CSV；Anki“Notes in Plain Text”导出的 `.txt`（制表符分隔，可带 `#separator:`、`#html:`、`#columns:` 等文件头）；以及勾选“Support older Anki versions”导出的旧格式 `.apkg`（用标准库的 zipfile 与 sqlite3 读取）。新版 `.apkg` 用 zstd 压缩，Python 标准库读不了，导入器会提示改用上面两种。`--map` 按列号或字段名指定 `word`、`reading`、`meaning`（以及 `forms`、`simple`、`similar`、`memo`），不写时第一列是词、第二列是释义；导出时若勾了 Anki 的牌组、笔记类型或标签列，列号会后移。导入时去掉 HTML 和 `[sound:…]`，Anki 式注音 `日本[にほん]語[ご]` 拆成词和读音；含汉字却没有读音的词条会被列出来，读音一律标 `unverified`，导入器不猜读音。
+
+**导出给 Anki。** 页面右上角菜单的“生词导出给 Anki”生成 Anki 2.1.54 起能识别文件头的 `.txt`：每个词一条，列为词、读音、释义、原文例句（取课文里含这个词的那一句）、我的解释、出处，标签为 `bunmyaku::包id::课id`，自认能解释的词另加 `bunmyaku::known`。这份文件也能反过来交给导入器：`--map word=词,reading=读音,meaning=释义`。
 
 ## 在线演示（静态页）
 

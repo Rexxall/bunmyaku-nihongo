@@ -26,6 +26,7 @@ Bunmyaku is a local web app. It ships no textbook. You (or your AI agent) arrang
 | Listening | Play, change speed, ±5 s, replay, A/B loop and saved segments; transcript lines and translations hide independently |
 | Tutor | Select any word or sentence and ask; the server sends the model only the proofread text of the current lesson. No API key? Copy the assembled prompt instead |
 | Records | Notes, answers and listening progress are saved in the browser per learner profile; one profile by default, more if you study with someone; export to Markdown, and vocabulary to Anki with the sentence it came from and your own explanation |
+| Interface | Chinese, Japanese or English, following the browser language; switch in the top-right menu. Course content itself is not translated |
 
 The server is a single Python standard-library script. No database, no account, no cloud. Content comes from a folder on your machine, keys stay on your machine, and tutor calls are billed to your own API account.
 

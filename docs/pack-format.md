@@ -25,7 +25,8 @@ my-pack/
 | `translation_language` | ✓ | string | 译文语言代码（`zh`、`en`…）。答疑系统提示用它决定解释语言 |
 | `license` | ✓ | string | 内容授权，SPDX 标识（`CC0-1.0`、`CC-BY-4.0`）或说明文字（`私人材料，不分发`） |
 | `author` `description` `source` | | string / object | 来源说明；`source` 可为 `{title, url, note}` |
-| `profiles` | | string[] | 学习档案名，缺省 `["我"]`；两人结伴学时写两个。用户可在页面里改，页面设置优先 |
+| `ui_language` | | string | 页面界面语言的默认值：`zh`、`ja` 或 `en`。不写时跟随浏览器语言（都不匹配时用英文）；学习者在右上角菜单里选的语言优先，链接里的 `#lang=` 再优先 |
+| `profiles` | | string[] | 学习档案名，缺省 `["我"]`（日文、英文界面显示为“私”“Me”，存储名不变，切换语言后笔记仍在）；两人结伴学时写两个。用户可在页面里改，页面设置优先 |
 | `tutor.persona` | | string | 追加到答疑系统提示的一段话，描述学习者与材料。不写人名也能用 |
 | `tutor.learner_note` | | string | 同上，偏学习者背景（母语、已学程度） |
 | `media` | | array | 可选，额外要提供给页面的媒体 `[{path, type, license}]`；课文件里引用的音频不必重复列 |
@@ -81,7 +82,7 @@ my-pack/
 | `reading` | 含汉字时 ✓ | 整词假名；页面用对齐算法把它分配到各汉字串上，分不唯一时整词显示 |
 | `reading_status` | 含汉字时 ✓ | `verified` 或 `unverified` |
 | `forms` | ✓ | 正文中实际出现的词形，用于高亮与“课文定位”；校验器对找不到的词形给警告 |
-| `meaning` | ✓ | 字符串，或 `{语言代码: 释义}`；页面优先显示 `translation_language` 那一项 |
+| `meaning` | ✓ | 字符串，或 `{语言代码: 释义}`；页面先显示界面语言那一项（有的话），再显示 `translation_language` 那一项 |
 | `simple` | | 简单日语释义（给学习者“用已会的词解释”的示范） |
 | `similar` `memo` | | 近义辨析、汉字／构词提示 |
 

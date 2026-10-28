@@ -106,11 +106,13 @@ class Validator(unittest.TestCase):
     def test_manifest_fields(self):
         pack = json.loads((self.folder / 'pack.json').read_text(encoding='utf-8'))
         pack['id'] = 'Bad ID'
+        pack['ui_language'] = 'fr'
         del pack['license']
         (self.folder / 'pack.json').write_text(json.dumps(pack, ensure_ascii=False), encoding='utf-8')
         rep = validate_pack.validate(self.folder)
         self.assertTrue(any('pack.json.id' in e for e in rep.errors), rep.errors)
         self.assertTrue(any('pack.json.license' in e for e in rep.errors), rep.errors)
+        self.assertTrue(any('pack.json.ui_language' in e for e in rep.errors), rep.errors)
         self.assertEqual(validate_pack.main([str(self.folder)]), 1)
 
 

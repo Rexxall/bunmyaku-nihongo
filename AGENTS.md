@@ -6,6 +6,7 @@
 
 - 运行：`python3 -m bunmyaku`（默认演示包，`python3 serve.py` 等价）；测试：`python3 -m unittest`，浏览器测试 `node test_*.cjs`（需要 Playwright，见 `docs/development.md`）；改样式或页面结构后必须跑 `test_layout.cjs`，改颜色、按钮或弹出层后必须跑 `test_a11y.cjs`。
 - 服务端无第三方依赖；前端不引入构建工具；新功能先改课程包格式说明再改代码。
+- 界面文字一律写进 `src/i18n.js`，中、日、英三种同时写；页面固定文字用 `data-i18n`，脚本里用 `t()`。课程包内容不翻译。改完在 `TEST_LOCALE=ja-JP`、`en-US` 下各跑一遍布局与无障碍测试。
 - 版权教材内容、私人课程包、密钥永远不进仓库：私人包放仓库外，用 `--content` 指向。`.gitignore` 里的 `content/`、`.local/`、`tutor.json` 不要去掉。
 - 提交信息一行，说明做了什么。README 与代码不写开发过程说明。
 

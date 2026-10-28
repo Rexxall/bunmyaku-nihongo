@@ -315,6 +315,8 @@ def validate(pack_dir: Path) -> Report:
             rep.error(f'{w}.{key}', '必填字符串缺失')
     if 'profiles' in pack and (not isinstance(pack['profiles'], list) or not all(isinstance(p, str) and p.strip() for p in pack['profiles'])):
         rep.error(w + '.profiles', '必须是非空字符串列表')
+    if 'ui_language' in pack and pack['ui_language'] not in ('zh', 'ja', 'en'):
+        rep.error(w + '.ui_language', f'界面语言只能是 zh、ja、en：{pack["ui_language"]!r}')
     tutor = pack.get('tutor')
     if tutor is not None and (not isinstance(tutor, dict) or any(not isinstance(v, str) for v in tutor.values())):
         rep.error(w + '.tutor', 'tutor 必须是 {persona, learner_note} 字符串对象')

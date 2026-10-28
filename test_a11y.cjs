@@ -1,18 +1,20 @@
 // Accessibility checks: axe-core (WCAG 2.2 A/AA and best practices) on every lesson × panel at a wide and a
 // phone width, plus the word drawer, the tutor, revealed answers, the header menu and both dialogs; then the
 // keyboard paths: skip link, tab arrows, word drawer focus return, grammar locate, tutor focus in and out.
-// Env: STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, AXE_PATH.
+// Env: TEST_LOCALE, STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, AXE_PATH.
 const fs = require('fs');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
 const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: process.env.PLAYWRIGHT_CHANNEL} : {})};
+// Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
+const locale = process.env.TEST_LOCALE || 'zh-CN';
 const axeSource = fs.readFileSync(process.env.AXE_PATH || require.resolve('axe-core/axe.min.js'), 'utf8');
 const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
 
 (async () => {
   const browser = await chromium.launch(launch);
   try {
-    const page = await browser.newPage();
+    const page = await browser.newPage({locale});
     page.setDefaultTimeout(10000);
     const failures = [];
     let scans = 0;
@@ -55,7 +57,7 @@ const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
     await open(1440, `#lesson=${lessons[0]}&panel=read`);
     await page.keyboard.press('Tab');
     await expectFocus('first Tab', /^a$/);
-    if (await page.evaluate(() => document.activeElement.textContent) !== '跳到学习内容') failures.push('first Tab does not reach the skip link');
+    if (await page.evaluate(() => document.activeElement.getAttribute('href')) !== '#main') failures.push('first Tab does not reach the skip link');
     await page.keyboard.press('Enter');
     await expectFocus('skip link', '#main');
 
@@ -92,7 +94,7 @@ const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
       process.exitCode = 1;
       return;
     }
-    console.log(`PASS: ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu and dialogs) and keyboard paths.`);
+    console.log(`PASS (${locale}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu and dialogs) and keyboard paths.`);
   } finally {
     await browser.close();
   }

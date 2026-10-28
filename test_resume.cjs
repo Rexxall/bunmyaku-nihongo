@@ -3,11 +3,13 @@ const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('assert');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
 const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: process.env.PLAYWRIGHT_CHANNEL} : {})};
+// Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
+const locale = process.env.TEST_LOCALE || 'zh-CN';
 
 (async () => {
   const browser = await chromium.launch(launch);
   try {
-    const page = await browser.newPage({viewport: {width: 1440, height: 1000}});
+    const page = await browser.newPage({locale, viewport: {width: 1440, height: 1000}});
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));

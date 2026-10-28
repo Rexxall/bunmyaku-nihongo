@@ -10,6 +10,9 @@ const LESSONS = PACK.lessons.map(l => ({...l, id: String(l.id)}));
 const STATIC_DEMO = document.documentElement.dataset.static === '1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+// Language of the pack's explanations (translations, meanings), so screen readers read them right whatever the interface language.
+const TL = ({zh: 'zh-CN'})[PACK.translation_language] || PACK.translation_language || 'zh-CN';
+applyStaticText();
 const KANJI = /[一-龯々〆〇]/u;
 const KANJI_RUN = /[一-龯々〆〇]+/gu;
 
@@ -55,6 +58,8 @@ function packProfiles() {
   const list = Array.isArray(PACK.profiles) ? PACK.profiles.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()) : [];
   return list.length ? [...new Set(list)] : ['我'];
 }
+// The default profile keeps its stored name '我' in every language so notes survive a language switch; only the label changes.
+const who = name => name === '我' ? t('profile.default') : name;
 let profiles = (() => { const saved = store.get(K.profiles, null); return Array.isArray(saved) && saved.length ? saved : packProfiles(); })();
 let learner = (() => { const saved = store.get(K.learner, null); return profiles.includes(saved) ? saved : profiles[0]; })();
 let course = LESSONS[0].id, L = LESSONS[0];
@@ -78,14 +83,14 @@ function save(id, patch) {
   const all = notesFor();
   all[learner][id] = {...record(id), ...patch};
   storageOK = store.set(K.notes(course), all);
-  $('save-status').textContent = storageOK ? '已保存到本机' : '本机存储不可用，请导出备份';
+  $('save-status').textContent = storageOK ? t('save.saved') : t('save.failed');
   updateProgress();
 }
 function updateProgress() {
   const words = L.vocabulary || [];
   const written = words.filter(e => record('v:' + e.id).text.trim()).length, done = words.filter(e => record('v:' + e.id).done).length;
-  $('note-progress').textContent = `${learner}：已写 ${written}/${words.length} · 自认能解释 ${done}/${words.length}`;
-  $('print-name').textContent = `${learner} · ${L.title}`;
+  $('note-progress').textContent = t('progress', {name: who(learner), written, done, total: words.length});
+  $('print-name').textContent = `${who(learner)} · ${L.title}`;
 }
 function notify(msg) {
   $('toast').textContent = msg; $('toast').hidden = false;
@@ -93,7 +98,7 @@ function notify(msg) {
 }
 
 function renderLearnerSelect() {
-  $('learner').innerHTML = profiles.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  $('learner').innerHTML = profiles.map(p => `<option value="${esc(p)}">${esc(who(p))}</option>`).join('');
   $('learner').value = learner;
   $('learner-control').hidden = profiles.length < 2;
 }
@@ -101,7 +106,7 @@ $('learner').onchange = e => {
   saveStudyPosition();
   document.querySelector('#listening audio')?.pause();
   learner = e.target.value; store.set(K.learner, learner);
-  renderAll(); $('save-status').textContent = '已切换到 ' + learner;
+  renderAll(); $('save-status').textContent = t('save.switched', {name: who(learner)});
   if (!$('tutor-dialog').hidden) tutorRender();
   if (profile().position) restoreStudyPosition();
 };
@@ -111,10 +116,10 @@ $('profiles-reset').onclick = () => { $('profiles-text').value = packProfiles().
 $('profiles-save').onclick = e => {
   e.preventDefault();
   const list = [...new Set($('profiles-text').value.split('\n').map(x => x.trim()).filter(Boolean))].slice(0, 8);
-  if (!list.length) { notify('至少保留一个名字。'); return; }
+  if (!list.length) { notify(t('profiles.keepOne')); return; }
   profiles = list; store.set(K.profiles, profiles);
   if (!profiles.includes(learner)) { learner = profiles[0]; store.set(K.learner, learner); }
-  renderLearnerSelect(); renderAll(); $('profiles-dialog').close(); notify('学习档案已更新。');
+  renderLearnerSelect(); renderAll(); $('profiles-dialog').close(); notify(t('profiles.updated'));
 };
 
 // ------------------------------------------------------------------ resume (position, audio)
@@ -213,7 +218,7 @@ function rubyTokens(text, ruby) {
 function rubyHTML(text, ruby, status) { return tokensToHTML(rubyTokens(text, ruby), status); }
 function statusChip(status) {
   if (!status || status === 'human' || status === 'verified') return '';
-  return `<span class="status-chip ${esc(status)}">${status === 'machine' ? '机器译' : '未核对'}</span>`;
+  return `<span class="status-chip ${esc(status)}">${status === 'machine' ? t('status.machine') : t('status.unverified')}</span>`;
 }
 
 // ------------------------------------------------------------------ reading panel
@@ -259,7 +264,7 @@ function annotateParagraph(p) {
     const range = ranges.find(r => r.start <= seg.start && r.end >= seg.end) || null;
     if ((range && range.id) !== (openGrammar && openGrammar.id)) {
       closeGrammar();
-      if (range) { openGrammar = range; out += `<span class="grammar" tabindex="-1" data-grammar="${esc(range.id)}" title="语法：${esc(range.g.name)}">`; }
+      if (range) { openGrammar = range; out += `<span class="grammar" tabindex="-1" data-grammar="${esc(range.id)}" title="${esc(t('grammar.underline', {name: range.g.name}))}">`; }
     }
     const ids = [...new Set(hits.filter(h => h.start <= seg.start && h.end >= seg.end).sort((x, y) => (y.end - y.start) - (x.end - x.start)).map(h => h.id))].join(',');
     if (ids !== openIds) {
@@ -276,11 +281,11 @@ function renderPassage() {
   $('passage').innerHTML = paragraphs.map((p, i) => {
     const tr = p.translation || {};
     const grammarButtons = grammar().filter(g => g.phrase && p.text.includes(g.phrase)).map(g => `<button data-gview="${esc(g.id)}">${esc(g.name)}</button>`).join('');
-    const sentences = Array.isArray(p.sentences) && p.sentences.length ? `<details class="sentence-toggle"><summary lang="zh-CN">逐句精讲 · ${p.sentences.length} 句</summary><ol class="sentence-list">${p.sentences.map(s => `<li class="sentence-card"><p class="sentence-ja" lang="ja">${rubyHTML(s.text, s.ruby, s.ruby_status)}</p><p lang="zh-CN">${esc(s.translation || '')}</p>${s.structure ? `<h4>句子结构</h4><p lang="zh-CN">${esc(s.structure)}</p>` : ''}${s.usage ? `<h4>用法与语气</h4><p lang="zh-CN">${esc(s.usage)}</p>` : ''}${s.example ? `<div class="sentence-example"><p lang="ja">${rubyHTML(s.example, s.example_ruby)}</p><p lang="zh-CN">${esc(s.example_translation || '')}</p></div>` : ''}<button type="button" class="ask-sentence" data-ask-sentence="${esc(s.text)}">继续问这句 ✧</button></li>`).join('')}</ol></details>` : '';
-    return `<div class="p-label" lang="zh-CN">第 ${i + 1} 段 ${statusChip(p.ruby_status)}</div><p>${annotateParagraph(p)}</p><div class="grammar-actions">${grammarButtons}</div>${tr.text ? `<details class="paragraph-translation"><summary lang="zh-CN">按需看这一段的译文 ${statusChip(tr.status)}</summary><div lang="zh-CN">${esc(tr.text)}</div></details>` : ''}${sentences}`;
+    const sentences = Array.isArray(p.sentences) && p.sentences.length ? `<details class="sentence-toggle"><summary>${t('read.sentences', {n: p.sentences.length})}</summary><ol class="sentence-list">${p.sentences.map(s => `<li class="sentence-card"><p class="sentence-ja" lang="ja">${rubyHTML(s.text, s.ruby, s.ruby_status)}</p><p lang="${TL}">${esc(s.translation || '')}</p>${s.structure ? `<h4>${t('read.structure')}</h4><p lang="${TL}">${esc(s.structure)}</p>` : ''}${s.usage ? `<h4>${t('read.usage')}</h4><p lang="${TL}">${esc(s.usage)}</p>` : ''}${s.example ? `<div class="sentence-example"><p lang="ja">${rubyHTML(s.example, s.example_ruby)}</p><p lang="${TL}">${esc(s.example_translation || '')}</p></div>` : ''}<button type="button" class="ask-sentence" data-ask-sentence="${esc(s.text)}">${t('read.askSentence')}</button></li>`).join('')}</ol></details>` : '';
+    return `<div class="p-label">${t('read.paragraph', {n: i + 1})} ${statusChip(p.ruby_status)}</div><p>${annotateParagraph(p)}</p><div class="grammar-actions">${grammarButtons}</div>${tr.text ? `<details class="paragraph-translation"><summary>${t('read.paragraphTranslation')} ${statusChip(tr.status)}</summary><div lang="${TL}">${esc(tr.text)}</div></details>` : ''}${sentences}`;
   }).join('');
   document.querySelectorAll('[data-gview]').forEach(b => b.onclick = () => selectGrammar(b.dataset.gview, b));
-  document.querySelectorAll('[data-ask-sentence]').forEach(b => b.onclick = () => { openTutor(); tutorSelection = b.dataset.askSentence; tutorRender(); $('tutor-question').value = '请继续详细讲解这句话，结合上下文解释词语、助词、修饰关系与语气。'; });
+  document.querySelectorAll('[data-ask-sentence]').forEach(b => b.onclick = () => { openTutor(); tutorSelection = b.dataset.askSentence; tutorRender(); $('tutor-question').value = t('read.askSentencePrompt'); });
 }
 $('passage').addEventListener('click', ev => {
   const w = ev.target.closest('[data-ids]'), g = ev.target.closest('[data-grammar]');
@@ -288,13 +293,14 @@ $('passage').addEventListener('click', ev => {
 });
 // Grammar underlines are mouse targets only (words inside them are buttons); keyboard users open grammar from the buttons under each paragraph.
 function simpleBlock(e) {
-  return e.simple ? `<p class="field-label">简单日语解释</p><div class="jp" lang="ja">${esc(e.simple)}</div>` : '';
+  return e.simple ? `<p class="field-label">${t('detail.simple')}</p><div class="jp" lang="ja">${esc(e.simple)}</div>` : '';
 }
 function meaningText(e) {
-  const m = e.meaning || {}; if (typeof m === 'string') return m;
-  const main = m[PACK.translation_language] || Object.values(m)[0] || '';
-  const extra = Object.entries(m).filter(([k, v]) => v && v !== main).map(([, v]) => v);
-  return esc(main) + (extra.length ? ` <small>· ${extra.map(esc).join(' · ')}</small>` : '');
+  const m = e.meaning || {}; if (typeof m === 'string') return esc(m);
+  // The interface language first when the pack has it, then the pack's own explanation language.
+  const order = [...new Set([UI_LANG, PACK.translation_language, ...Object.keys(m)])].filter(k => m[k]);
+  const span = k => `<span lang="${UI_HTML_LANG[k] || k}">${esc(m[k])}</span>`;
+  return order.length ? span(order[0]) + (order.length > 1 ? ` <small>· ${order.slice(1).map(span).join(' · ')}</small>` : '') : '';
 }
 function selectEntry(id, anchor) {
   selected = id; lastAnchor = anchor || lastAnchor;
@@ -303,21 +309,21 @@ function selectEntry(id, anchor) {
 }
 function renderDetail() {
   const e = vocab().find(x => x.id === selected) || vocab()[0];
-  if (!e) { $('detail').innerHTML = '<p class="minor">本课没有词条。</p>'; return; }
+  if (!e) { $('detail').innerHTML = `<p class="minor">${t('detail.empty')}</p>`; return; }
   selected = e.id;
   const r = record('v:' + e.id), forms = (e.forms || []).filter(f => (L.paragraphs || []).some(p => p.text.includes(f)));
-  $('detail').innerHTML = `<small>词条 ${vocab().indexOf(e) + 1}/${vocab().length} ${statusChip(e.reading_status === 'verified' ? '' : e.reading_status)}</small><h3 lang="ja">${sourceReading(e.word, e.reading)}</h3><p class="kana" lang="ja">${esc(e.reading || '')}</p><p>${meaningText(e)}</p>${simpleBlock(e)}${forms.length ? `<p class="field-label">正文里看到的样子</p><p lang="ja">${forms.map(esc).join(' ／ ')}</p>` : ''}${e.similar ? `<p class="field-label">相似词，哪里不同？</p><p>${esc(e.similar)}</p>` : ''}${e.memo ? `<details><summary>汉字／构词提示</summary><p>${esc(e.memo)}</p></details>` : ''}<details class="notes"><summary>我的笔记</summary><label class="field-label" for="detail-answer">${esc(learner)}：用自己的话解释</label><textarea id="detail-answer" lang="ja" placeholder="先自己说，再写下来。">${esc(r.text)}</textarea><label class="checks"><input id="detail-done" type="checkbox" ${r.done ? 'checked' : ''}>我能不看参考解释这个词</label></details><button class="top-return" id="return-text">回到刚才的正文位置</button>`;
+  $('detail').innerHTML = `<small>${t('detail.entry', {n: vocab().indexOf(e) + 1, total: vocab().length})} ${statusChip(e.reading_status === 'verified' ? '' : e.reading_status)}</small><h3 lang="ja">${sourceReading(e.word, e.reading)}</h3><p class="kana" lang="ja">${esc(e.reading || '')}</p><p>${meaningText(e)}</p>${simpleBlock(e)}${forms.length ? `<p class="field-label">${t('detail.forms')}</p><p lang="ja">${forms.map(esc).join(' ／ ')}</p>` : ''}${e.similar ? `<p class="field-label">${t('detail.similar')}</p><p lang="${TL}">${esc(e.similar)}</p>` : ''}${e.memo ? `<details><summary>${t('detail.memo')}</summary><p lang="${TL}">${esc(e.memo)}</p></details>` : ''}<details class="notes"><summary>${t('detail.myNotes')}</summary><label class="field-label" for="detail-answer">${esc(t('detail.ownWords', {name: who(learner)}))}</label><textarea id="detail-answer" lang="ja" placeholder="${esc(t('detail.ownWordsPlaceholder'))}">${esc(r.text)}</textarea><label class="checks"><input id="detail-done" type="checkbox" ${r.done ? 'checked' : ''}>${t('detail.canExplain')}</label></details><button class="top-return" id="return-text">${t('detail.back')}</button>`;
   $('detail-answer').oninput = ev => save('v:' + e.id, {text: ev.target.value});
   $('detail-done').onchange = ev => save('v:' + e.id, {done: ev.target.checked});
   $('return-text').onclick = () => { closeDetail(); if (lastAnchor) { lastAnchor.scrollIntoView({block: 'center'}); lastAnchor.focus(); } else $('passage').scrollIntoView(); };
 }
 function grammarCard(g) {
-  return `<h3 lang="ja">${esc(g.name)}</h3>${g.phrase ? `<blockquote lang="ja">${rubyHTML(g.phrase, g.phrase_ruby)}</blockquote>` : '<p class="hint">正文未完整出现；见例句。</p>'}<dl>${g.meaning ? `<dt>意思</dt><dd>${esc(g.meaning)}</dd>` : ''}${g.connection ? `<dt>接续</dt><dd lang="ja">${esc(g.connection)}</dd>` : ''}${g.example ? `<dt>例句</dt><dd lang="ja">${rubyHTML(g.example, g.example_ruby)}${g.example_translation ? `<br><span class="minor">${esc(g.example_translation)}</span>` : ''}</dd>` : ''}${g.trap ? `<dt>别混淆</dt><dd>${esc(g.trap)}</dd>` : ''}</dl>`;
+  return `<h3 lang="ja">${esc(g.name)}</h3>${g.phrase ? `<blockquote lang="ja">${rubyHTML(g.phrase, g.phrase_ruby)}</blockquote>` : `<p class="hint">${t('grammar.notInText')}</p>`}<dl>${g.meaning ? `<dt>${t('grammar.meaning')}</dt><dd lang="${TL}">${esc(g.meaning)}</dd>` : ''}${g.connection ? `<dt>${t('grammar.connection')}</dt><dd lang="ja">${esc(g.connection)}</dd>` : ''}${g.example ? `<dt>${t('grammar.example')}</dt><dd lang="ja">${rubyHTML(g.example, g.example_ruby)}${g.example_translation ? `<br><span class="minor" lang="${TL}">${esc(g.example_translation)}</span>` : ''}</dd>` : ''}${g.trap ? `<dt>${t('grammar.trap')}</dt><dd lang="${TL}">${esc(g.trap)}</dd>` : ''}</dl>`;
 }
 function selectGrammar(id, anchor) {
   const g = grammar().find(x => x.id === id); if (!g) return;
   lastAnchor = anchor || lastAnchor;
-  $('detail').innerHTML = grammarCard(g) + '<button id="back-to-passage">回正文</button>';
+  $('detail').innerHTML = grammarCard(g) + `<button id="back-to-passage">${t('detail.backShort')}</button>`;
   $('back-to-passage').onclick = () => { closeDetail(); if (lastAnchor) { lastAnchor.scrollIntoView({block: 'center'}); lastAnchor.focus(); } };
   if (anchor) openDetail();
 }
@@ -337,7 +343,7 @@ const detailHome = document.createComment('reading detail position'); $('detail-
 function openDetail() {
   if (!matchMedia('(max-width:1100px)').matches) return;
   document.body.append($('detail-shell')); $('detail-shell').classList.add('is-open');
-  $('detail-shell').setAttribute('role', 'dialog'); $('detail-shell').setAttribute('aria-modal', 'true'); $('detail-shell').setAttribute('aria-label', '随读解释');
+  $('detail-shell').setAttribute('role', 'dialog'); $('detail-shell').setAttribute('aria-modal', 'true'); $('detail-shell').setAttribute('aria-label', t('detail.label'));
   document.body.classList.add('drawer-open'); $('detail-close').focus();
 }
 function closeDetail(restore = true) {
@@ -365,9 +371,9 @@ $('ruby-toggle').onchange = e => { document.body.classList.toggle('hide-ruby', !
 if (store.get(K.ruby, true) === false) { $('ruby-toggle').checked = false; document.body.classList.add('hide-ruby'); }
 
 function renderTranslation() {
-  $('translation-title').textContent = `${L.title} · 全文译文`;
+  $('translation-title').textContent = t('translation.title', {title: L.title});
   const parallel = $('parallel').checked;
-  $('translation-content').innerHTML = (L.paragraphs || []).map((p, i) => `<section class="translation-row ${parallel ? '' : 'zh-only'}">${parallel ? `<div><span class="tag">第${i + 1}段 · 原文</span><p class="original" lang="ja">${rubyHTML(p.text, p.ruby, p.ruby_status)}</p></div>` : ''}<div><span class="tag">第${i + 1}段 · 译文 ${statusChip((p.translation || {}).status)}</span><p>${esc((p.translation || {}).text || '（无译文）')}</p></div></section>`).join('');
+  $('translation-content').innerHTML = (L.paragraphs || []).map((p, i) => `<section class="translation-row ${parallel ? '' : 'zh-only'}">${parallel ? `<div><span class="tag">${t('translation.original', {n: i + 1})}</span><p class="original" lang="ja">${rubyHTML(p.text, p.ruby, p.ruby_status)}</p></div>` : ''}<div><span class="tag">${t('translation.translated', {n: i + 1})} ${statusChip((p.translation || {}).status)}</span><p lang="${(p.translation || {}).text ? TL : document.documentElement.lang}">${esc((p.translation || {}).text || t('translation.none'))}</p></div></section>`).join('');
 }
 $('translation-open').onclick = () => { renderTranslation(); $('translation-dialog').showModal(); };
 $('translation-close').onclick = () => $('translation-dialog').close(); $('parallel').onchange = renderTranslation;
@@ -378,15 +384,15 @@ const wordDisclosure = {};
 function wordOpen(id) { return wordDisclosure[`${learner}:${course}`]?.[id] !== false; }
 function updateDisclosureButton() {
   const all = vocab().every(e => wordOpen(e.id));
-  $('hide-refs').textContent = all ? '全部收起释义' : '全部展开释义';
+  $('hide-refs').textContent = all ? t('words.collapseAll') : t('words.expandAll');
 }
 function renderWords() {
   const q = $('search').value.trim().toLowerCase();
   const list = vocab().filter(e => [e.word, e.reading, JSON.stringify(e.meaning || ''), e.simple, ...(e.forms || [])].join(' ').toLowerCase().includes(q));
   $('word-grid').innerHTML = list.length ? list.map(e => {
     const r = record('v:' + e.id);
-    return `<article class="workcard"><div class="term-heading"><h3 lang="ja"><small>${vocab().indexOf(e) + 1}</small> ${sourceReading(e.word, e.reading)}</h3>${statusChip(e.reading_status === 'verified' ? '' : e.reading_status)}</div>${e.simple ? `<div class="simple-words"><div class="simple-chips" lang="ja"><span>${esc(e.simple)}</span></div></div>` : ''}<details class="word-reference" data-reference="${esc(e.id)}" ${wordOpen(e.id) ? 'open' : ''}><summary>释义与辨析</summary><p class="minor">${meaningText(e)}</p>${e.similar ? `<p>${esc(e.similar)}</p>` : ''}${e.memo ? `<p class="minor">${esc(e.memo)}</p>` : ''}</details><details class="notes"><summary>我的笔记</summary><label for="answer-${esc(e.id)}">${esc(learner)}：用自己的话解释</label><textarea id="answer-${esc(e.id)}" data-answer="${esc(e.id)}" lang="ja" placeholder="～ことです。／～という意味です。">${esc(r.text)}</textarea><label class="checks"><input type="checkbox" data-done="${esc(e.id)}" ${r.done ? 'checked' : ''}>我能不看参考解释</label></details><button class="locate" data-locate="${esc(e.id)}">课文定位 ↗</button></article>`;
-  }).join('') : '<p class="empty">没有找到。试试日语原词、假名或译文。</p>';
+    return `<article class="workcard"><div class="term-heading"><h3 lang="ja"><small>${vocab().indexOf(e) + 1}</small> ${sourceReading(e.word, e.reading)}</h3>${statusChip(e.reading_status === 'verified' ? '' : e.reading_status)}</div>${e.simple ? `<div class="simple-words"><div class="simple-chips" lang="ja"><span>${esc(e.simple)}</span></div></div>` : ''}<details class="word-reference" data-reference="${esc(e.id)}" ${wordOpen(e.id) ? 'open' : ''}><summary>${t('words.reference')}</summary><p class="minor">${meaningText(e)}</p>${e.similar ? `<p lang="${TL}">${esc(e.similar)}</p>` : ''}${e.memo ? `<p class="minor" lang="${TL}">${esc(e.memo)}</p>` : ''}</details><details class="notes"><summary>${t('detail.myNotes')}</summary><label for="answer-${esc(e.id)}">${esc(t('detail.ownWords', {name: who(learner)}))}</label><textarea id="answer-${esc(e.id)}" data-answer="${esc(e.id)}" lang="ja" placeholder="～ことです。／～という意味です。">${esc(r.text)}</textarea><label class="checks"><input type="checkbox" data-done="${esc(e.id)}" ${r.done ? 'checked' : ''}>${t('words.canExplain')}</label></details><button class="locate" data-locate="${esc(e.id)}">${t('words.locate')}</button></article>`;
+  }).join('') : `<p class="empty">${t('words.none')}</p>`;
   document.querySelectorAll('[data-answer]').forEach(x => x.oninput = () => save('v:' + x.dataset.answer, {text: x.value}));
   document.querySelectorAll('[data-done]').forEach(x => x.onchange = () => save('v:' + x.dataset.done, {done: x.checked}));
   document.querySelectorAll('[data-locate]').forEach(x => x.onclick = () => locate(x.dataset.locate));
@@ -401,7 +407,7 @@ $('hide-refs').onclick = () => {
   document.querySelectorAll('#word-grid .word-reference').forEach(x => x.open = open); updateDisclosureButton();
 };
 function renderGrammars() {
-  $('grammar-grid').innerHTML = grammar().length ? grammar().map(g => `<article class="grammarcard" id="grammar-${esc(g.id)}">${grammarCard(g)}${g.phrase && (L.paragraphs || []).some(p => p.text.includes(g.phrase)) ? `<button data-grammar-locate="${esc(g.id)}">在正文中定位</button>` : ''}</article>`).join('') : '<p class="empty-panel">本课没有语法条目。</p>';
+  $('grammar-grid').innerHTML = grammar().length ? grammar().map(g => `<article class="grammarcard" id="grammar-${esc(g.id)}">${grammarCard(g)}${g.phrase && (L.paragraphs || []).some(p => p.text.includes(g.phrase)) ? `<button data-grammar-locate="${esc(g.id)}">${t('grammar.locate')}</button>` : ''}</article>`).join('') : `<p class="empty-panel">${t('grammar.empty')}</p>`;
   document.querySelectorAll('[data-grammar-locate]').forEach(x => x.onclick = () => locateGrammar(x.dataset.grammarLocate));
 }
 
@@ -417,7 +423,7 @@ const icons = {
   translation: '<path d="M3 5h12M9 3v2M6 5c0 5 4 9 8 10M12 5c0 5-4 9-8 10M14 21l4-10 4 10M15.5 17h5"/>',
 };
 function studyIcon(button, kind, on) {
-  const name = {answers: '答案', hints: '提示', explanations: '讲解', transcript: '原文', translation: '译文'}[kind], label = (on ? '隐藏' : '显示') + name;
+  const label = t(on ? 'view.hide' : 'view.show', {name: t('view.' + kind)});
   button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[kind]}</svg>`; button.classList.add('study-icon');
   button.setAttribute('aria-label', label); button.title = label; button.setAttribute('aria-pressed', String(on));
 }
@@ -430,9 +436,9 @@ function questionHTML(e, open) {
 }
 function exerciseCard(e, index, open) {
   const choices = e.type === 'choice' && Array.isArray(e.choices) ? `<ol class="choice-list">${e.choices.map((c, j) => `<li lang="ja" data-correct="${c === e.answer}" class="${open ? 'revealed' : ''}"><span>${String.fromCharCode(97 + j)}.</span>${esc(c)}</li>`).join('')}</ol>` : '';
-  const answer = e.type === 'fill' ? '' : (e.answer || e.reference) ? `<div class="reveal-panel answer-panel" id="answer-${esc(e.id)}" ${open ? '' : 'hidden'}><p class="ex-question" lang="ja">${esc(e.answer || e.reference)}</p>${e.type === 'open' ? '<p class="minor">开放题：以上是参考说法，答案不唯一。</p>' : ''}</div>` : '';
+  const answer = e.type === 'fill' ? '' : (e.answer || e.reference) ? `<div class="reveal-panel answer-panel" id="answer-${esc(e.id)}" ${open ? '' : 'hidden'}><p class="ex-question" lang="ja">${esc(e.answer || e.reference)}</p>${e.type === 'open' ? `<p class="minor">${t('ex.openNote')}</p>` : ''}</div>` : '';
   const r = record('x:' + e.id);
-  return `<article class="exercise-card" data-exercise="${esc(e.id)}"><div class="ex-meta"><span>第 ${index + 1} 题 · ${({fill: '填空', choice: '选择', transform: '改写', open: '自由作答'})[e.type] || esc(e.type || '')}</span></div><p class="ex-question" id="question-${esc(e.id)}" lang="ja" aria-live="polite">${questionHTML(e, open)}</p>${choices}${e.hint ? `<div class="reveal-panel hint-panel" id="hint-${esc(e.id)}" ${exerciseView.hints ? '' : 'hidden'}>${esc(e.hint)}</div>` : ''}${answer}${e.explanation ? `<div class="reveal-panel explain-panel" id="explain-${esc(e.id)}" ${exerciseView.explanations ? '' : 'hidden'}><strong>为什么这样答</strong><p>${esc(e.explanation)}</p></div>` : ''}<details class="notes"><summary>我的作答</summary><textarea data-exercise-note="${esc(e.id)}" lang="ja" placeholder="先自己答，再看答案。">${esc(r.text)}</textarea></details><button class="ask-exercise" aria-label="问老师这道题" title="问这道题" data-ask-exercise="${esc(e.id)}"><span aria-hidden="true">✧</span></button></article>`;
+  return `<article class="exercise-card" data-exercise="${esc(e.id)}"><div class="ex-meta"><span>${t('ex.number', {n: index + 1})} · ${['fill', 'choice', 'transform', 'open'].includes(e.type) ? t('ex.type.' + e.type) : esc(e.type || '')}</span></div><p class="ex-question" id="question-${esc(e.id)}" lang="ja" aria-live="polite">${questionHTML(e, open)}</p>${choices}${e.hint ? `<div class="reveal-panel hint-panel" id="hint-${esc(e.id)}" lang="${TL}" ${exerciseView.hints ? '' : 'hidden'}>${esc(e.hint)}</div>` : ''}${answer}${e.explanation ? `<div class="reveal-panel explain-panel" id="explain-${esc(e.id)}" ${exerciseView.explanations ? '' : 'hidden'}><strong>${t('ex.why')}</strong><p lang="${TL}">${esc(e.explanation)}</p></div>` : ''}<details class="notes"><summary>${t('ex.myAnswer')}</summary><textarea data-exercise-note="${esc(e.id)}" lang="ja" aria-label="${esc(t('ex.myAnswer'))}" placeholder="${esc(t('ex.placeholder'))}">${esc(r.text)}</textarea></details><button class="ask-exercise" aria-label="${esc(t('ex.ask'))}" title="${esc(t('ex.askShort'))}" data-ask-exercise="${esc(e.id)}"><span aria-hidden="true">✧</span></button></article>`;
 }
 function applyExerciseView(root, items) {
   for (const e of items) {
@@ -446,17 +452,17 @@ function applyExerciseView(root, items) {
 }
 function bindExerciseCards(root, items, section) {
   root.querySelectorAll('[data-exercise-note]').forEach(x => x.oninput = () => save('x:' + x.dataset.exerciseNote, {text: x.value}));
-  root.querySelectorAll('[data-ask-exercise]').forEach(b => b.onclick = () => openTutor({section, itemId: b.dataset.askExercise, prompt: '请先给我这道题的思考提示，不要直接公布完整答案。'}));
+  root.querySelectorAll('[data-ask-exercise]').forEach(b => b.onclick = () => openTutor({section, itemId: b.dataset.askExercise, prompt: t('ex.askPrompt')}));
   root.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { exerciseView[b.dataset.view] = !exerciseView[b.dataset.view]; applyExerciseView(root, items); });
   applyExerciseView(root, items);
 }
-const viewButtons = () => `<div class="study-visibility" role="group" aria-label="整组显示"><button data-view="hints"></button><button data-view="answers"></button><button data-view="explanations"></button></div>`;
+const viewButtons = () => `<div class="study-visibility" role="group" aria-label="${esc(t('ex.visibility'))}"><button data-view="hints"></button><button data-view="answers"></button><button data-view="explanations"></button></div>`;
 function renderExercises() {
   const groups = L.exercises || [];
-  if (!groups.length) { $('exercises').innerHTML = '<div class="section-bar"><h2>练习</h2></div><p class="empty-panel">本课没有练习。</p>'; return; }
+  if (!groups.length) { $('exercises').innerHTML = `<div class="section-bar"><h2>${t('ex.title')}</h2></div><p class="empty-panel">${t('ex.empty')}</p>`; return; }
   if (!groups.some(g => g.id === exerciseGroup)) exerciseGroup = groups[0].id;
   const at = groups.findIndex(g => g.id === exerciseGroup), g = groups[at];
-  $('exercises').innerHTML = `<div class="section-bar exercise-bar"><h2>练习</h2><div class="bar-controls"><select id="exercise-group" aria-label="练习部分">${groups.map(x => `<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('')}</select><div class="button-pair"><button id="ex-prev" aria-label="上一部分">←</button><button id="ex-next" aria-label="下一部分">→</button></div>${viewButtons()}</div></div>${g.instruction ? `<p class="hint">${esc(g.instruction)}</p>` : ''}<div id="exercise-body">${g.items.map((e, i) => exerciseCard(e, i, exerciseView.answers)).join('')}</div>`;
+  $('exercises').innerHTML = `<div class="section-bar exercise-bar"><h2>${t('ex.title')}</h2><div class="bar-controls"><select id="exercise-group" aria-label="${esc(t('ex.group'))}">${groups.map(x => `<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('')}</select><div class="button-pair"><button id="ex-prev" aria-label="${esc(t('ex.prev'))}">←</button><button id="ex-next" aria-label="${esc(t('ex.next'))}">→</button></div>${viewButtons()}</div></div>${g.instruction ? `<p class="hint" lang="${TL}">${esc(g.instruction)}</p>` : ''}<div id="exercise-body">${g.items.map((e, i) => exerciseCard(e, i, exerciseView.answers)).join('')}</div>`;
   $('exercise-group').value = exerciseGroup;
   $('exercise-group').onchange = e => { exerciseGroup = e.target.value; renderExercises(); };
   $('ex-prev').disabled = at === 0; $('ex-next').disabled = at === groups.length - 1;
@@ -474,12 +480,12 @@ function clock(t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 6
 function renderListening() {
   const items = L.listening || [];
   document.querySelector('#listening audio')?.pause();
-  if (!items.length) { $('listening').innerHTML = '<div class="section-bar"><h2>听力</h2></div><p class="empty-panel">本课没有听力条目。</p>'; listeningId = null; return; }
+  if (!items.length) { $('listening').innerHTML = `<div class="section-bar"><h2>${t('listen.title')}</h2></div><p class="empty-panel">${t('listen.empty')}</p>`; listeningId = null; return; }
   if (!items.some(x => x.id === listeningId)) listeningId = items[0].id;
   const at = items.findIndex(x => x.id === listeningId), item = items[at];
   const speed = audioRecord(learner, 'settings').speed, rate = SPEEDS.includes(speed) ? speed : 1;
-  const player = item.audio ? `<div class="listen-player"><div class="listen-player-top"><select id="listen-speed" aria-label="播放速度">${SPEEDS.map(v => `<option value="${v}" ${v === rate ? 'selected' : ''}>${v}×</option>`).join('')}</select><button id="listen-loop-a" title="把当前位置设为循环起点">A</button><button id="listen-loop-b" title="把当前位置设为循环终点，开始循环">B</button><button id="listen-loop-clear" class="icon-btn" title="清除循环" aria-label="清除循环">↺</button><button id="listen-loop-save" class="icon-btn" title="保存当前循环片段" aria-label="保存当前循环片段" disabled>＋</button><span id="listen-loop-label" class="minor" aria-live="polite"></span></div><div class="listen-transport" role="group" aria-label="精听操作"><button id="listen-back" aria-label="回退5秒">−5s</button><button id="listen-play" class="primary" aria-label="播放" aria-keyshortcuts="Space">▶ 播放</button><button id="listen-replay" title="重听刚才5秒，播完暂停（R）" aria-keyshortcuts="R">↶ 重听</button><button id="listen-forward" aria-label="前进5秒">+5s</button></div><audio id="listen-audio" controls preload="metadata" src="${esc(item.audio)}" aria-label="${esc(item.title)}"></audio><div id="listen-clips" class="listen-clips"></div><p id="listen-audio-status" class="minor" role="status" hidden></p>${item.audio_status === 'placeholder' ? '<p class="minor">这条音频是占位音，用来演示播放器。</p>' : ''}</div>` : `<div class="listen-no-audio">本条没有音频，只有文稿。${item.note ? esc(item.note) : ''}</div>`;
-  $('listening').innerHTML = `<div class="section-bar"><h2>听力</h2><div class="bar-controls"><select id="listen-item" aria-label="听力条目">${items.map(x => `<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('')}</select><div class="button-pair"><button id="listen-prev" aria-label="上一条">←</button><button id="listen-next" aria-label="下一条">→</button></div><span class="listen-view-icons"><button id="listen-transcript-toggle"></button><button id="listen-translation-toggle"></button></span>${item.questions?.length ? viewButtons() : ''}</div></div>${player}<div class="listen-study-text"><div class="listen-study-title"><h3 lang="ja">${esc(item.title)}</h3></div>${item.intro ? `<p class="listen-context" lang="ja">${esc(item.intro)}</p>` : ''}<div class="listen-transcript">${(item.lines || []).map((l, i) => `<article class="listen-transcript-row" id="line-${esc(item.id)}-${i}"><div class="listen-line-ja"><span class="listen-speaker">${esc(l.speaker || String(i + 1).padStart(2, '0'))}</span><p lang="ja">${rubyHTML(l.text, l.ruby, l.ruby_status)}</p><button class="icon-btn" data-ask-line="${esc(l.text)}" aria-label="问这一句">✧</button></div>${l.translation ? `<p class="listen-study-translation">${esc(l.translation)}</p>` : ''}${l.note ? `<p class="listen-study-analysis">${esc(l.note)}</p>` : ''}</article>`).join('')}</div>${item.questions?.length ? `<h4>题目</h4><div id="listen-questions">${item.questions.map((q, i) => exerciseCard(q, i, exerciseView.answers)).join('')}</div>` : ''}</div>`;
+  const player = item.audio ? `<div class="listen-player"><div class="listen-player-top"><select id="listen-speed" aria-label="${esc(t('listen.speed'))}">${SPEEDS.map(v => `<option value="${v}" ${v === rate ? 'selected' : ''}>${v}×</option>`).join('')}</select><button id="listen-loop-a" title="${esc(t('listen.loopA'))}">A</button><button id="listen-loop-b" title="${esc(t('listen.loopB'))}">B</button><button id="listen-loop-clear" class="icon-btn" title="${esc(t('listen.loopClear'))}" aria-label="${esc(t('listen.loopClear'))}">↺</button><button id="listen-loop-save" class="icon-btn" title="${esc(t('listen.loopSave'))}" aria-label="${esc(t('listen.loopSave'))}" disabled>＋</button><span id="listen-loop-label" class="minor" aria-live="polite"></span></div><div class="listen-transport" role="group" aria-label="${esc(t('listen.transport'))}"><button id="listen-back" aria-label="${esc(t('listen.back'))}">−5s</button><button id="listen-play" class="primary" aria-label="${esc(t('listen.playLabel'))}" aria-keyshortcuts="Space">${t('listen.play')}</button><button id="listen-replay" title="${esc(t('listen.replayTitle'))}" aria-keyshortcuts="R">${t('listen.replay')}</button><button id="listen-forward" aria-label="${esc(t('listen.forward'))}">+5s</button></div><audio id="listen-audio" controls preload="metadata" src="${esc(item.audio)}" aria-label="${esc(item.title)}"></audio><div id="listen-clips" class="listen-clips"></div><p id="listen-audio-status" class="minor" role="status" hidden></p>${item.audio_status === 'placeholder' ? `<p class="minor">${t('listen.placeholder')}</p>` : ''}</div>` : `<div class="listen-no-audio">${t('listen.noAudio')}${item.note ? ' ' + esc(item.note) : ''}</div>`;
+  $('listening').innerHTML = `<div class="section-bar"><h2>${t('listen.title')}</h2><div class="bar-controls"><select id="listen-item" aria-label="${esc(t('listen.item'))}">${items.map(x => `<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('')}</select><div class="button-pair"><button id="listen-prev" aria-label="${esc(t('listen.prev'))}">←</button><button id="listen-next" aria-label="${esc(t('listen.next'))}">→</button></div><span class="listen-view-icons"><button id="listen-transcript-toggle"></button><button id="listen-translation-toggle"></button></span>${item.questions?.length ? viewButtons() : ''}</div></div>${player}<div class="listen-study-text"><div class="listen-study-title"><h3 lang="ja">${esc(item.title)}</h3></div>${item.intro ? `<p class="listen-context" lang="ja">${esc(item.intro)}</p>` : ''}<div class="listen-transcript">${(item.lines || []).map((l, i) => `<article class="listen-transcript-row" id="line-${esc(item.id)}-${i}"><div class="listen-line-ja"><span class="listen-speaker" lang="ja">${esc(l.speaker || String(i + 1).padStart(2, '0'))}</span><p lang="ja">${rubyHTML(l.text, l.ruby, l.ruby_status)}</p><button class="icon-btn" data-ask-line="${esc(l.text)}" aria-label="${esc(t('listen.askLine'))}">✧</button></div>${l.translation ? `<p class="listen-study-translation" lang="${TL}">${esc(l.translation)}</p>` : ''}${l.note ? `<p class="listen-study-analysis" lang="${TL}">${esc(l.note)}</p>` : ''}</article>`).join('')}</div>${item.questions?.length ? `<h4>${t('listen.questions')}</h4><div id="listen-questions">${item.questions.map((q, i) => exerciseCard(q, i, exerciseView.answers)).join('')}</div>` : ''}</div>`;
   $('listen-item').value = listeningId;
   $('listen-item').onchange = e => { listeningId = e.target.value; renderListening(); tutorRefresh(); };
   $('listen-prev').disabled = at === 0; $('listen-next').disabled = at === items.length - 1;
@@ -493,7 +499,7 @@ function renderListening() {
   $('listen-transcript-toggle').onclick = () => { listenView.transcript = !listenView.transcript; applyView(); };
   $('listen-translation-toggle').onclick = () => { listenView.translation = !listenView.translation; applyView(); };
   applyView();
-  $('listening').querySelectorAll('[data-ask-line]').forEach(b => b.onclick = () => openTutor({section: 'listening', itemId: item.id, selection: b.dataset.askLine, prompt: '请解析这一句的意思、句子结构和容易听错的地方。'}));
+  $('listening').querySelectorAll('[data-ask-line]').forEach(b => b.onclick = () => openTutor({section: 'listening', itemId: item.id, selection: b.dataset.askLine, prompt: t('listen.askLinePrompt')}));
   if (item.questions?.length) bindExerciseCards($('listening'), item.questions, 'listening');
   if (item.audio) installPlayer(item);
 }
@@ -510,28 +516,28 @@ function installPlayer(item) {
   const clips = () => {
     const saved = audioRecord(owner, key).clips;
     const list = Array.isArray(saved) ? saved.filter(c => c && Number.isFinite(c.start) && Number.isFinite(c.end) && c.start >= 0 && c.end > c.start).slice(0, 20) : [];
-    $('listen-clips').innerHTML = list.map((c, i) => `<span class="listen-clip"><button data-clip="${i}" title="循环播放这个片段">▶ ${clock(c.start)}–${clock(c.end)}</button><button data-remove-clip="${i}" aria-label="删除片段">×</button></span>`).join('');
-    $('listen-clips').querySelectorAll('[data-clip]').forEach(b => b.onclick = () => { const c = list[Number(b.dataset.clip)]; if (!Number.isFinite(a.duration) || c.end > a.duration) return; replayEnd = replayStart = null; loopA = c.start; loopB = c.end; a.currentTime = loopA; update(); a.play().catch(() => status('点播放即可重听。')); });
+    $('listen-clips').innerHTML = list.map((c, i) => `<span class="listen-clip"><button data-clip="${i}" title="${esc(t('listen.clipPlay'))}">▶ ${clock(c.start)}–${clock(c.end)}</button><button data-remove-clip="${i}" aria-label="${esc(t('listen.clipRemove'))}">×</button></span>`).join('');
+    $('listen-clips').querySelectorAll('[data-clip]').forEach(b => b.onclick = () => { const c = list[Number(b.dataset.clip)]; if (!Number.isFinite(a.duration) || c.end > a.duration) return; replayEnd = replayStart = null; loopA = c.start; loopB = c.end; a.currentTime = loopA; update(); a.play().catch(() => status(t('listen.tapToReplay'))); });
     $('listen-clips').querySelectorAll('[data-remove-clip]').forEach(b => b.onclick = () => { list.splice(Number(b.dataset.removeClip), 1); saveAudioState(owner, key, {clips: list}); clips(); });
   };
   const savePosition = () => { if (Number.isFinite(a.currentTime) && Number.isFinite(a.duration)) { saveAudioState(owner, key, {time: a.currentTime >= a.duration - .5 ? 0 : a.currentTime}); saveAudioState(owner, 'settings', {speed: a.playbackRate}); } };
-  const playLabel = () => { if (!a.isConnected || !$('listen-play')) return; $('listen-play').textContent = a.paused ? '▶ 继续' : 'Ⅱ 暂停'; $('listen-play').setAttribute('aria-label', a.paused ? '继续播放' : '暂停'); };
-  const play = () => a.play().then(() => status('')).catch(e => { if (e.name !== 'AbortError') status('请再点播放继续。'); });
+  const playLabel = () => { if (!a.isConnected || !$('listen-play')) return; $('listen-play').textContent = a.paused ? t('listen.resume') : t('listen.pause'); $('listen-play').setAttribute('aria-label', a.paused ? t('listen.resumeLabel') : t('listen.pauseLabel')); };
+  const play = () => a.play().then(() => status('')).catch(e => { if (e.name !== 'AbortError') status(t('listen.tapToContinue')); });
   const seek = delta => { if (!Number.isFinite(a.duration)) return; replayEnd = replayStart = null; a.currentTime = Math.min(loopB ?? a.duration, Math.max(loopA ?? 0, a.currentTime + delta)); };
   a.playbackRate = SPEEDS.includes(audioRecord(owner, 'settings').speed) ? audioRecord(owner, 'settings').speed : 1;
-  a.onloadedmetadata = () => { const t = Number.isFinite(audioRecord(owner, key).time) ? Math.max(0, audioRecord(owner, key).time) : 0; if (t < a.duration - 1) a.currentTime = t; status(t > 1 ? '续听 ' + clock(t) : ''); };
+  a.onloadedmetadata = () => { const at = Number.isFinite(audioRecord(owner, key).time) ? Math.max(0, audioRecord(owner, key).time) : 0; if (at < a.duration - 1) a.currentTime = at; status(at > 1 ? t('listen.resumeAt', {time: clock(at)}) : ''); };
   $('listen-play').onclick = () => { if (!a.paused) { a.pause(); return; } replayEnd = replayStart = null; play(); };
   $('listen-back').onclick = () => seek(-5); $('listen-forward').onclick = () => seek(5);
   $('listen-replay').onclick = () => { if (!Number.isFinite(a.duration)) return; if (loopB !== null) { a.currentTime = loopA; play(); return; } if (replayEnd === null) { replayEnd = a.currentTime; replayStart = Math.max(0, replayEnd - 5); } if (replayEnd <= replayStart) { replayEnd = replayStart = null; return; } a.currentTime = replayStart; play(); };
   a.onplay = playLabel; a.onpause = () => { savePosition(); playLabel(); };
   a.ontimeupdate = () => { savePosition(); if (replayEnd !== null && !a.paused && a.currentTime >= replayEnd) { a.pause(); a.currentTime = replayEnd; } else if (loopB !== null && a.currentTime >= loopB) a.currentTime = loopA; };
-  a.onended = () => { if (loopA !== null && loopB !== null) { a.currentTime = loopA; a.play().catch(() => status('请点播放继续循环。')); } };
-  a.onerror = () => status('音频未能载入，请检查课程包里的媒体文件。');
+  a.onended = () => { if (loopA !== null && loopB !== null) { a.currentTime = loopA; a.play().catch(() => status(t('listen.tapToLoop'))); } };
+  a.onerror = () => status(t('listen.loadError'));
   $('listen-speed').onchange = e => { a.playbackRate = Number(e.target.value); savePosition(); };
-  $('listen-loop-a').onclick = () => { replayEnd = replayStart = null; if (!Number.isFinite(a.duration)) { status('音频载入后即可设置循环。'); return; } loopA = a.currentTime; loopB = null; status(''); update(); };
-  $('listen-loop-b').onclick = () => { if (loopA === null) { status('先在想重复的片段开头点 A，再在结尾点 B。'); return; } if (a.currentTime <= loopA + .3) { status('B 点要晚于 A 点。'); return; } loopB = a.currentTime; a.currentTime = loopA; status(''); update(); a.play().catch(() => status('循环已设好，点播放即可。')); };
+  $('listen-loop-a').onclick = () => { replayEnd = replayStart = null; if (!Number.isFinite(a.duration)) { status(t('listen.loopWait')); return; } loopA = a.currentTime; loopB = null; status(''); update(); };
+  $('listen-loop-b').onclick = () => { if (loopA === null) { status(t('listen.loopHowTo')); return; } if (a.currentTime <= loopA + .3) { status(t('listen.loopOrder')); return; } loopB = a.currentTime; a.currentTime = loopA; status(''); update(); a.play().catch(() => status(t('listen.loopReady'))); };
   $('listen-loop-clear').onclick = () => { replayEnd = replayStart = null; loopA = loopB = null; status(''); update(); };
-  $('listen-loop-save').onclick = () => { if (loopA === null || loopB === null) return; const list = Array.isArray(audioRecord(owner, key).clips) ? [...audioRecord(owner, key).clips] : []; if (!list.some(c => Math.abs(c.start - loopA) < .2 && Math.abs(c.end - loopB) < .2)) { if (list.length >= 20) { status('每条录音最多保存 20 个片段。'); return; } list.push({start: loopA, end: loopB}); saveAudioState(owner, key, {clips: list}); clips(); } status('片段已保存'); };
+  $('listen-loop-save').onclick = () => { if (loopA === null || loopB === null) return; const list = Array.isArray(audioRecord(owner, key).clips) ? [...audioRecord(owner, key).clips] : []; if (!list.some(c => Math.abs(c.start - loopA) < .2 && Math.abs(c.end - loopB) < .2)) { if (list.length >= 20) { status(t('listen.clipLimit')); return; } list.push({start: loopA, end: loopB}); saveAudioState(owner, key, {clips: list}); clips(); } status(t('listen.clipSaved')); };
   update(); clips();
 }
 document.addEventListener('keydown', e => {
@@ -552,16 +558,16 @@ function noteEntries(lesson = L) {
 }
 function renderNotes() {
   const entries = noteEntries();
-  $('notes').innerHTML = `<div class="section-bar"><h2>我的笔记</h2><div class="bar-controls"><span class="minor">${esc(learner)} · ${esc(L.title)}</span></div></div>${entries.length ? `<div class="note-grid">${entries.map(n => `<article class="note-card"><h3 lang="ja">${esc(n.label)}</h3>${n.text ? `<p lang="ja">${esc(n.text)}</p>` : ''}${n.done ? '<p class="minor">✓ 自认能解释</p>' : ''}</article>`).join('')}</div>` : '<p class="empty-panel">这一课还没有笔记。词条卡和练习卡里的“我的笔记／我的作答”会汇总到这里。</p>'}`;
+  $('notes').innerHTML = `<div class="section-bar"><h2>${t('notes.title')}</h2><div class="bar-controls"><span class="minor">${esc(who(learner))} · ${esc(L.title)}</span></div></div>${entries.length ? `<div class="note-grid">${entries.map(n => `<article class="note-card"><h3 lang="ja">${esc(n.label)}</h3>${n.text ? `<p lang="ja">${esc(n.text)}</p>` : ''}${n.done ? `<p class="minor">${t('notes.canExplain')}</p>` : ''}</article>`).join('')}</div>` : `<p class="empty-panel">${t('notes.empty')}</p>`}`;
 }
 $('export').onclick = () => {
   const date = new Date().toLocaleDateString('sv-SE');
-  let md = `---\nlearner: ${learner}\npack: ${PACK.title || PACK_ID}\nlesson: ${L.title}\nexported: ${date}\n---\n\n# ${learner} · ${L.title} · 笔记\n\n以下是本人填写的内容；参考答案未代填。\n\n`;
-  for (const e of L.vocabulary || []) { const r = record('v:' + e.id); md += `## ${e.word}（${e.reading || ''}）\n\n${(r.text || '（尚未填写）').replace(/\r\n/g, '\n')}\n\n- [${r.done ? 'x' : ' '}] 自认能不看参考解释\n\n`; }
+  let md = `---\nlearner: ${who(learner)}\npack: ${PACK.title || PACK_ID}\nlesson: ${L.title}\nexported: ${date}\n---\n\n# ${t('export.heading', {name: who(learner), lesson: L.title})}\n\n${t('export.intro')}\n\n`;
+  for (const e of L.vocabulary || []) { const r = record('v:' + e.id); md += `## ${e.word}（${e.reading || ''}）\n\n${(r.text || t('export.empty')).replace(/\r\n/g, '\n')}\n\n- [${r.done ? 'x' : ' '}] ${t('export.canExplain')}\n\n`; }
   for (const q of [...(L.exercises || []).flatMap(g => g.items), ...(L.listening || []).flatMap(x => x.questions || [])]) { const r = record('x:' + q.id); if (r.text) md += `## ${q.question}\n\n${r.text.replace(/\r\n/g, '\n')}\n\n`; }
   const url = URL.createObjectURL(new Blob([md], {type: 'text/markdown;charset=utf-8'})), a = document.createElement('a');
-  a.href = url; a.download = `${date}_${learner}_${L.title}_笔记.md`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  notify('已导出笔记。');
+  a.href = url; a.download = `${date}_${who(learner)}_${L.title}_${t('export.file')}.md`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  notify(t('export.done'));
 };
 // Anki "Notes in Plain Text" import file (Anki 2.1.54+ reads the # headers): one note per word of this lesson,
 // with the sentence it appears in, the learner's own explanation and tags for the pack, lesson and known words.
@@ -576,7 +582,7 @@ function ankiField(value) {
 }
 function ankiExport() {
   const tag = s => String(s).replace(/\s+/g, '_');
-  const lines = ['#separator:tab', '#html:false', '#columns:词\t读音\t释义\t原文例句\t我的解释\t出处\tTags', '#tags column:7'];
+  const lines = ['#separator:tab', '#html:false', '#columns:' + t('anki.columns'), '#tags column:7'];
   for (const e of vocab()) {
     const r = record('v:' + e.id), m = e.meaning || {};
     const meaning = typeof m === 'string' ? m : [m[PACK.translation_language], ...Object.entries(m).filter(([k]) => k !== PACK.translation_language).map(([, v]) => v)].filter(Boolean).join(' · ');
@@ -586,13 +592,20 @@ function ankiExport() {
   return lines.join('\n') + '\n';
 }
 $('export-anki').onclick = () => {
-  if (!vocab().length) { notify('本课没有词条。'); return; }
+  if (!vocab().length) { notify(t('anki.none')); return; }
   const date = new Date().toLocaleDateString('sv-SE');
   const url = URL.createObjectURL(new Blob([ankiExport()], {type: 'text/plain;charset=utf-8'})), a = document.createElement('a');
   a.href = url; a.download = `${date}_${PACK_ID}_${L.id}_anki.txt`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  notify(`已导出 ${vocab().length} 个词：在 Anki 里选“文件 → 导入”，字段按列名对应。`);
+  notify(t('anki.done', {n: vocab().length}));
 };
 $('print').onclick = () => window.print();
+$('ui-lang').innerHTML = UI_LANGS.map(x => `<option value="${x}" lang="${UI_HTML_LANG[x]}">${UI_LANG_NAMES[x]}</option>`).join('');
+$('ui-lang').value = UI_LANG;
+$('ui-lang').onchange = e => {
+  store.set('bunmyaku:ui-lang', e.target.value);
+  const params = new URLSearchParams(location.hash.replace(/^#/, '')); params.delete('lang');
+  saveStudyPosition(); history.replaceState(null, '', location.pathname + location.search + (params.size ? '#' + params : '')); location.reload();
+};
 
 // The header menu closes after an action, on Escape, and on a click elsewhere.
 const moreMenu = document.querySelector('.header-more');
@@ -623,23 +636,23 @@ function switchCourse(id) {
   L = LESSONS.find(l => l.id === String(id)) || LESSONS[0]; course = L.id;
   selected = null; lastAnchor = null; exerciseGroup = null; listeningId = null; $('search').value = ''; $('course').value = course;
   const index = LESSONS.indexOf(L);
-  $('course-heading').textContent = `／ ${L.number ? '第' + L.number + '课' : L.title}`; $('course-subtitle').textContent = [L.title, L.theme].filter(Boolean).join(' · ');
+  $('course-heading').textContent = `／ ${L.number ? t('course.number', {n: L.number}) : L.title}`; $('course-subtitle').textContent = [L.title, L.theme].filter(Boolean).join(' · ');
   $('course-status').textContent = L.status || PACK.description || '';
   $('passage-heading').innerHTML = rubyHTML(L.title, L.title_ruby); $('passage-source').textContent = L.source || '';
-  $('passage-note').textContent = (L.paragraphs || []).some(p => (p.translation || {}).status === 'machine' || p.ruby_status === 'unverified') ? '本课部分译文或注音尚未经人核对，带标记的地方请留意。' : '原文与译文、讲解分开呈现。可以关掉高亮先读，再找词句核对。';
-  $('tab-words').textContent = `词汇 · ${vocab().length}`; $('tab-grammar').textContent = `语法 · ${grammar().length}`;
-  $('tab-listening').textContent = `听力${(L.listening || []).length ? ' · ' + L.listening.length : ''}`;
+  $('passage-note').textContent = (L.paragraphs || []).some(p => (p.translation || {}).status === 'machine' || p.ruby_status === 'unverified') ? t('read.noteUnchecked') : t('read.noteDefault');
+  $('tab-words').textContent = `${t('tab.words')} · ${vocab().length}`; $('tab-grammar').textContent = `${t('tab.grammar')} · ${grammar().length}`;
+  $('tab-listening').textContent = `${t('tab.listening')}${(L.listening || []).length ? ' · ' + L.listening.length : ''}`;
   $('prev-course').disabled = index === 0; $('next-course').disabled = index === LESSONS.length - 1;
   $('course-position').textContent = `${index + 1} / ${LESSONS.length}`; $('course').title = $('course').selectedOptions[0]?.textContent || '';
   document.title = `${L.title} · Bunmyaku`;
   renderAll(); showTab('read');
-  $('save-status').textContent = storageOK ? '本机独立保存' : '请导出备份';
+  $('save-status').textContent = storageOK ? t('save.local') : t('save.export');
 }
-$('course').innerHTML = LESSONS.map(l => `<option value="${esc(l.id)}">${l.number ? '第' + esc(l.number) + '课 · ' : ''}${esc(l.title)}</option>`).join('');
+$('course').innerHTML = LESSONS.map(l => `<option value="${esc(l.id)}">${l.number ? esc(t('course.number', {n: l.number})) + ' · ' : ''}${esc(l.title)}</option>`).join('');
 $('course').onchange = e => switchCourse(e.target.value);
 $('prev-course').onclick = () => { const i = LESSONS.indexOf(L); if (i > 0) switchCourse(LESSONS[i - 1].id); };
 $('next-course').onclick = () => { const i = LESSONS.indexOf(L); if (i < LESSONS.length - 1) switchCourse(LESSONS[i + 1].id); };
-$('pack-title').textContent = PACK.title || PACK_ID; $('pack-license').textContent = PACK.license ? `内容授权 ${PACK.license}` : '';
+$('pack-title').textContent = PACK.title || PACK_ID; $('pack-license').textContent = PACK.license ? t('license', {license: PACK.license}) : '';
 
 // ------------------------------------------------------------------ tutor
 
@@ -663,7 +676,7 @@ let tutorPreferredWidth = Math.max(280, Number(store.get(K.tutorWidth, 420)) || 
 function setTutorWidth(value, persist = false) {
   const max = Math.min(820, innerWidth), min = Math.min(320, max), width = Math.round(Math.max(min, Math.min(max, value)));
   document.documentElement.style.setProperty('--tutor-width', width + 'px');
-  const h = $('tutor-resize'); h.setAttribute('aria-valuemin', min); h.setAttribute('aria-valuemax', max); h.setAttribute('aria-valuenow', width); h.setAttribute('aria-valuetext', width + ' 像素');
+  const h = $('tutor-resize'); h.setAttribute('aria-valuemin', min); h.setAttribute('aria-valuemax', max); h.setAttribute('aria-valuenow', width); h.setAttribute('aria-valuetext', t('tutor.pixels', {n: width}));
   if (persist) { tutorPreferredWidth = width; store.set(K.tutorWidth, width); }
 }
 setTutorWidth(tutorPreferredWidth); window.addEventListener('resize', () => setTutorWidth(tutorPreferredWidth));
@@ -682,33 +695,33 @@ function chat() { return tutorChats[chatKey()] || (tutorChats[chatKey()] = []); 
 function currentSection() { return !$('listening').hidden ? 'listening' : 'read'; }
 function tutorRefresh() { if (tutorBusy) return; tutorSection = currentSection(); tutorItem = tutorSection === 'listening' ? (listeningId || '') : ''; tutorSelection = ''; if (!$('tutor-dialog').hidden) tutorRender(); }
 function tutorItemLabel() {
-  for (const g of L.exercises || []) { const i = g.items.findIndex(e => e.id === tutorItem); if (i >= 0) return `${g.title} · 第 ${i + 1} 题`; }
-  for (const x of L.listening || []) { if (x.id === tutorItem) return `听力 · ${x.title}`; const i = (x.questions || []).findIndex(q => q.id === tutorItem); if (i >= 0) return `${x.title} · 题 ${i + 1}`; }
+  for (const g of L.exercises || []) { const i = g.items.findIndex(e => e.id === tutorItem); if (i >= 0) return t('tutor.exerciseItem', {group: g.title, n: i + 1}); }
+  for (const x of L.listening || []) { if (x.id === tutorItem) return t('tutor.listeningItem', {title: x.title}); const i = (x.questions || []).findIndex(q => q.id === tutorItem); if (i >= 0) return t('tutor.listeningQuestion', {title: x.title, n: i + 1}); }
   return '';
 }
 function tutorRender() {
   $('tutor-selection').hidden = !tutorSelection; $('selection-text').textContent = tutorSelection;
-  const prompts = tutorSelection ? ['用简单日语解释选中的内容', '拆开这句话，讲讲语法和连接', '给两个类似例句，并标注假名']
-    : tutorItem && tutorSection !== 'listening' ? ['给这道题一点提示', '解释这道题为什么这样答', '出一道同类型的题让我练习']
-    : tutorSection === 'listening' ? ['帮我解释这段对话里的敬语', '这段对话里哪句最容易听错？', '用同一场景出一道听力题']
-    : !$('grammar').hidden ? ['用简单例句比较本课语法', '用本课语法出一道生活情境题']
-    : !$('words').hidden ? ['选三个本课词，用简单日语解释', '本课有哪些容易混淆的词？']
-    : ['用简单日语概括本课内容', '问我一个关于课文的问题', '挑一句长句，带我拆开理解'];
+  const prompts = t(tutorSelection ? 'tutor.q.selection'
+    : tutorItem && tutorSection !== 'listening' ? 'tutor.q.exercise'
+    : tutorSection === 'listening' ? 'tutor.q.listening'
+    : !$('grammar').hidden ? 'tutor.q.grammar'
+    : !$('words').hidden ? 'tutor.q.words'
+    : 'tutor.q.read');
   $('tutor-suggestions').innerHTML = prompts.map(q => `<button type="button" class="suggestion">${esc(q)} <span aria-hidden="true">↗</span></button>`).join('');
   $('tutor-suggestions').querySelectorAll('button').forEach(b => b.onclick = () => { $('tutor-question').value = b.textContent.replace(/ ↗$/, ''); $('tutor-question').focus(); });
-  $('tutor-context').textContent = `${L.title}${tutorSection === 'listening' ? ' · 听力' : ''} · ${learner}${tutorItem && tutorItemLabel() ? ' · ' + tutorItemLabel() : ''}${tutorSelection ? ' · 已附选中文字' : ''}`;
-  $('tutor-messages').innerHTML = chat().map(m => `<div class="chat-message ${m.role}"><strong class="chat-author">${m.role === 'user' ? '我' : '老师'}</strong><div class="chat-content">${m.role === 'assistant' ? tutorMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div></div>`).join('');
+  $('tutor-context').textContent = `${L.title}${tutorSection === 'listening' ? t('tutor.listening') : ''} · ${who(learner)}${tutorItem && tutorItemLabel() ? ' · ' + tutorItemLabel() : ''}${tutorSelection ? t('tutor.withSelection') : ''}`;
+  $('tutor-messages').innerHTML = chat().map(m => `<div class="chat-message ${m.role}"><strong class="chat-author">${m.role === 'user' ? t('tutor.me') : t('tutor.teacher')}</strong><div class="chat-content">${m.role === 'assistant' ? tutorMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div></div>`).join('');
   $('tutor-send').disabled = tutorBusy || STATIC_DEMO; $('tutor-cancel').hidden = !tutorBusy;
   const copyMode = tutorConfigured === false;
   $('tutor-dialog').classList.toggle('copy-mode', copyMode); $('tutor-copy').hidden = !copyMode;
 }
 async function tutorStatus() {
-  if (STATIC_DEMO) { tutorConfigured = null; $('tutor-status').textContent = '这是在线演示页，没有本机服务，答疑不可用。把仓库下载到本机运行 python3 -m bunmyaku 即可提问。'; tutorRender(); return; }
+  if (STATIC_DEMO) { tutorConfigured = null; $('tutor-status').textContent = t('tutor.static'); tutorRender(); return; }
   try {
     const r = await fetch('/api/status', {cache: 'no-store'}); if (!r.ok) throw Error();
     const a = await r.json(); tutorToken = a.token; tutorConfigured = a.configured === true;
-    $('tutor-status').textContent = a.configured ? `已连接 · ${a.preset === 'custom' ? '自定义端点' : a.preset} · ${a.model} · 首次发送时验证` : '尚未配置答疑接口：运行 python3 configure_ai.py，或直接用“复制提示词”贴到任何聊天工具。';
-  } catch { tutorConfigured = null; $('tutor-status').textContent = '无法连接本机服务，请确认 serve.py 正在运行。'; }
+    $('tutor-status').textContent = a.configured ? t('tutor.connected', {preset: a.preset === 'custom' ? t('tutor.custom') : a.preset, model: a.model}) : t('tutor.notConfigured');
+  } catch { tutorConfigured = null; $('tutor-status').textContent = t('tutor.offline'); }
   tutorRender();
 }
 function selectedStudyText() {
@@ -720,7 +733,7 @@ function selectedStudyText() {
 document.addEventListener('selectionchange', () => { clearTimeout(window.selectionTimer); window.selectionTimer = setTimeout(() => { const text = selectedStudyText(); if (!text || tutorBusy) return; tutorSelection = text; tutorItem = tutorSection === 'listening' ? (listeningId || '') : ''; tutorSection = currentSection(); if (!$('tutor-dialog').hidden) tutorRender(); }, 150); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('tutor-dialog').hidden && !document.querySelector('dialog[open]')) $('tutor-close').click(); });
 function openTutor(options = {}) {
-  if (tutorBusy && options.itemId) { notify('请先等当前回答结束，或取消当前请求。'); return; }
+  if (tutorBusy && options.itemId) { notify(t('tutor.busy')); return; }
   tutorSection = options.section || currentSection();
   const selection = selectedStudyText();
   tutorItem = options.itemId || (tutorSection === 'listening' ? (listeningId || '') : '');
@@ -748,14 +761,14 @@ async function copyText(text) {
   area.remove(); return ok;
 }
 $('tutor-copy').onclick = async () => {
-  const question = $('tutor-question').value.trim(); if (!question || tutorBusy) { notify('先写下你的问题。'); return; }
+  const question = $('tutor-question').value.trim(); if (!question || tutorBusy) { notify(t('tutor.writeFirst')); return; }
   try {
     if (!tutorToken) await tutorStatus();
     const response = await fetch('/api/prompt', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Study-Token': tutorToken}, body: JSON.stringify(requestBody(question))});
-    const result = await response.json(); if (!response.ok) throw Error(result.error || '请求失败');
+    const result = await response.json(); if (!response.ok) throw Error(result.error || t('tutor.requestFailed'));
     const out = $('tutor-prompt-out');
-    if (await copyText(result.prompt)) { out.hidden = true; $('tutor-result').textContent = '提示词已复制，可贴到任何聊天工具；回答不会自动回到这里。'; }
-    else { out.value = result.prompt; out.hidden = false; out.focus(); out.select(); $('tutor-result').textContent = '浏览器不允许自动复制：提示词已在下方选中，请手动复制。'; }
+    if (await copyText(result.prompt)) { out.hidden = true; $('tutor-result').textContent = t('tutor.copied'); }
+    else { out.value = result.prompt; out.hidden = false; out.focus(); out.select(); $('tutor-result').textContent = t('tutor.copyManual'); }
   } catch (err) { $('tutor-result').textContent = err.message; }
 };
 $('tutor-form').onsubmit = async e => {
@@ -765,15 +778,15 @@ $('tutor-form').onsubmit = async e => {
   const question = $('tutor-question').value.trim(); if (!question || tutorBusy) return;
   const key = chatKey(), messages = chat(), body = requestBody(question);
   messages.push({role: 'user', content: question});
-  tutorBusy = true; tutorController = new AbortController(); $('tutor-question').value = ''; tutorRender(); $('tutor-result').textContent = '正在思考…';
+  tutorBusy = true; tutorController = new AbortController(); $('tutor-question').value = ''; tutorRender(); $('tutor-result').textContent = t('tutor.thinking');
   const timer = setTimeout(() => tutorController.abort(), 100000);
   try {
     if (!tutorToken) await tutorStatus();
     const response = await fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Study-Token': tutorToken}, body: JSON.stringify(body), signal: tutorController.signal});
-    const result = await response.json(); if (!response.ok) throw Error(result.error || '请求失败');
+    const result = await response.json(); if (!response.ok) throw Error(result.error || t('tutor.requestFailed'));
     messages.push({role: 'assistant', content: result.answer}); $('tutor-result').textContent = '';
   } catch (err) {
-    $('tutor-result').textContent = err.name === 'AbortError' ? '已取消或等待超时；服务端已经发出的请求仍可能产生费用。' : err.message;
+    $('tutor-result').textContent = err.name === 'AbortError' ? t('tutor.cancelled') : err.message;
     $('tutor-question').value = question; messages.pop();
   } finally { clearTimeout(timer); tutorBusy = false; tutorController = null; if (chatKey() === key) tutorRender(); }
 };

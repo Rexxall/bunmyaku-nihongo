@@ -55,7 +55,9 @@ main{padding-bottom:120px}
 .workspace header p{word-break:keep-all;overflow-wrap:anywhere}
 .ex-question,.listen-line-ja p{text-wrap:pretty}
 /* The more-menu lives inside the header, so undo the header subtitle and summary styles it inherits. */
-.more-menu{width:220px}
+.more-menu{width:max-content;min-width:220px;max-width:min(300px,calc(100vw - 32px))}
+.more-menu .ui-language{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 0;font-size:12px;color:var(--muted);font-weight:400}
+.more-menu .ui-language select{min-height:34px;font-size:13px}
 .more-menu button{white-space:nowrap}
 .workspace header .more-menu p{font-weight:400;font-size:11px;line-height:1.7;color:var(--muted);max-width:none;word-break:normal;text-wrap:pretty}
 .header-more .more-menu summary{list-style:revert;padding:4px 0;font-size:12px;color:var(--muted);min-height:0}

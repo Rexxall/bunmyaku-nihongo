@@ -3,11 +3,13 @@ const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('assert');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
 const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: process.env.PLAYWRIGHT_CHANNEL} : {})};
+// Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
+const locale = process.env.TEST_LOCALE || 'zh-CN';
 
 (async () => {
   const browser = await chromium.launch(launch);
   try {
-    const page = await browser.newPage({viewport: {width: 1440, height: 1000}});
+    const page = await browser.newPage({locale, viewport: {width: 1440, height: 1000}});
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -33,7 +35,7 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
     // A phone on http://192.168.x.x is not a secure context: no navigator.clipboard. Fall back to execCommand,
     // and when that is refused too, show the prompt selected for manual copying.
     for (const execWorks of [true, false]) {
-      const insecure = await browser.newPage({viewport: {width: 390, height: 844}});
+      const insecure = await browser.newPage({locale, viewport: {width: 390, height: 844}});
       insecure.on('pageerror', e => errors.push(e.message));
       await insecure.route('**/api/status', r => r.fulfill({json: {configured: false, token: 'mock', model: 'mock', preset: 'test', pack: {id: 'demo-pack'}}}));
       await insecure.route('**/api/prompt', r => r.fulfill({json: {prompt: '模拟提示词'}}));

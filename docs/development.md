@@ -177,7 +177,10 @@ python3 -m unittest -v                 # 服务端、发布流程、工具、启
 python3 tools/validate_pack.py examples/demo-pack --strict
 python3 -m bunmyaku --port 8766 &      # 浏览器测试默认访问这个端口
 node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs && node test_a11y.cjs
+for l in ja-JP en-US; do TEST_LOCALE=$l node test_layout.cjs && TEST_LOCALE=$l node test_a11y.cjs; done
 ```
+
+界面语言跟随浏览器语言，所以测试用 `TEST_LOCALE` 设定浏览器语言（默认 `zh-CN`）。`test_layout.cjs` 与 `test_a11y.cjs` 要在三种语言下各跑一遍：英文标签更长，最容易撑破布局。
 
 `test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 六个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 

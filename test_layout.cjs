@@ -2,10 +2,12 @@
 // Fails on page-level horizontal scroll, text overflowing its own box, elements sticking out of the sidebar
 // or a card, interface labels breaking onto two lines, split fill-in blanks, a header menu that stays open, and
 // page errors from audio events that fire after the learner has left the listening panel.
-// Env: STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, LAYOUT_WIDTHS.
+// Env: TEST_LOCALE, STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, LAYOUT_WIDTHS.
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
 const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: process.env.PLAYWRIGHT_CHANNEL} : {})};
+// Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
+const locale = process.env.TEST_LOCALE || 'zh-CN';
 const widths = (process.env.LAYOUT_WIDTHS || '1440,1180,1024,820,768,650,390,360').split(',').map(Number);
 const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
 
@@ -71,7 +73,7 @@ function sweep() {
 (async () => {
   const browser = await chromium.launch(launch);
   try {
-    const page = await browser.newPage();
+    const page = await browser.newPage({locale});
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on('pageerror', e => errors.push(e.message + ' @ ' + page.url() + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' | ')));
@@ -138,7 +140,7 @@ function sweep() {
       process.exitCode = 1;
       return;
     }
-    console.log(`PASS: ${views} views (${lessons.length} lessons × ${widths.length} widths × ${panels.length} panels, tutor open and closed on wide screens), the header menu, and leaving a playing player.`);
+    console.log(`PASS (${locale}): ${views} views (${lessons.length} lessons × ${widths.length} widths × ${panels.length} panels, tutor open and closed on wide screens), the header menu, and leaving a playing player.`);
   } finally {
     await browser.close();
   }

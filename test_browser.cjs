@@ -1,14 +1,16 @@
 // Layout and rendering checks against the demo pack. Isolated browser; /api/chat is mocked.
-// Env: STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL (e.g. chrome).
+// Env: TEST_LOCALE, STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL (e.g. chrome).
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('assert');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
 const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: process.env.PLAYWRIGHT_CHANNEL} : {})};
+// Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
+const locale = process.env.TEST_LOCALE || 'zh-CN';
 
 (async () => {
   const browser = await chromium.launch(launch);
   try {
-    const page = await browser.newPage({viewport: {width: 1440, height: 1000}});
+    const page = await browser.newPage({locale, viewport: {width: 1440, height: 1000}});
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.route('**/api/status', r => r.fulfill({json: {configured: true, token: 'mock', model: 'mock', preset: 'test', pack: {id: 'demo-pack'}}}));
@@ -64,6 +66,25 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
       await page.keyboard.press('Escape');
       checks++;
     }
+    // Interface language: the menu switches it, the choice is remembered, notes stay with the same profile.
+    await page.setViewportSize({width: 1440, height: 1000});
+    await page.goto(url + '#lesson=01&panel=read');
+    await page.reload();
+    const tabText = () => page.locator('#tab-read').textContent();
+    const zhTab = await tabText();
+    await page.evaluate(() => { save('v:v1', {text: '言語切替テスト'}); });
+    for (const [lang, htmlLang] of [['en', 'en'], ['ja', 'ja'], ['zh', 'zh-CN']]) {
+      await page.locator('.header-more > summary').click();
+      await Promise.all([page.waitForEvent('load'), page.selectOption('#ui-lang', lang)]);
+      assert.equal(await page.evaluate(() => document.documentElement.lang), htmlLang);
+      assert.equal(await page.evaluate(() => record('v:v1').text), '言語切替テスト', `notes kept in ${lang}`);
+      checks++;
+    }
+    assert.equal(await tabText(), zhTab);
+    await page.goto(url + '#lesson=01&panel=read&lang=en'); await page.reload();
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en', 'lang= in the link wins');
+    await page.evaluate(() => { localStorage.removeItem('bunmyaku:ui-lang'); });
+
     console.log({checks, errors});
     assert.deepEqual(errors, []);
   } finally {

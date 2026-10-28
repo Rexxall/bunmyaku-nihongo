@@ -66,5 +66,7 @@ jobs:
           node test_browser.cjs
           node test_learning.cjs
           node test_resume.cjs
-          node test_layout.cjs
-          node test_a11y.cjs
+          for locale in zh-CN ja-JP en-US; do
+            TEST_LOCALE=$locale node test_layout.cjs
+            TEST_LOCALE=$locale node test_a11y.cjs
+          done

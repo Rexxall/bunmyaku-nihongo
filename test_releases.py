@@ -87,3 +87,20 @@ class Extension(unittest.TestCase):
         files = [manifest['background']['service_worker'], manifest['options_ui']['page'], *manifest['icons'].values(), *manifest['action']['default_icon'].values()]
         for name in files:
             self.assertTrue((root / name).is_file(), name)
+
+
+class Appearance(unittest.TestCase):
+    """Light and dark come from the tokens in glass.css, so the older stylesheets must not hard-code colours."""
+
+    def test_layout_styles_use_tokens_only(self):
+        import re
+        src = Path(__file__).resolve().parent / 'src'
+        for name in ('base.css', 'theme.css', 'app.css'):
+            text = re.sub(r'@media print\{(?:[^{}]|\{[^{}]*\})*\}', '', (src / name).read_text(encoding='utf-8'))
+            values = re.findall(r'[\w-]+\s*:\s*([^;{}]+)', text)
+            fixed = [v for v in values if re.search(r'#[0-9a-fA-F]{3,8}\b|(?<![\w-])(?:white|black)(?![\w-])', v)]
+            self.assertEqual(fixed, [], name)
+        page = (src / 'page.html').read_text(encoding='utf-8')
+        self.assertLess(page.index('@@SOURCE:app.css@@'), page.index('@@SOURCE:apple-kit.css@@'))
+        self.assertLess(page.index('@@SOURCE:apple-kit.css@@'), page.index('@@SOURCE:glass.css@@'))
+        self.assertIn('<body class="ap">', page)

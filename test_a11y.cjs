@@ -1,7 +1,9 @@
 // Accessibility checks: axe-core (WCAG 2.2 A/AA and best practices) on every lesson × panel at a wide and a
 // phone width, plus the word drawer, the tutor, revealed answers, the header menu and both dialogs; then the
 // keyboard paths: skip link, tab arrows, word drawer focus return, grammar locate, tutor focus in and out.
-// Env: TEST_LOCALE, STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, AXE_PATH.
+// TEST_APPEARANCE runs it all under another system setting: dark, or reduced (less transparency and less
+// motion), where the glass surfaces must turn solid and nothing may animate.
+// Env: TEST_LOCALE, TEST_APPEARANCE (light, dark, reduced), STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, AXE_PATH.
 const fs = require('fs');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
@@ -9,6 +11,9 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
 // Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
 const locale = process.env.TEST_LOCALE || 'zh-CN';
 const axeSource = fs.readFileSync(process.env.AXE_PATH || require.resolve('axe-core/axe.min.js'), 'utf8');
+const appearance = process.env.TEST_APPEARANCE || 'light';
+const media = {light: {}, dark: {'prefers-color-scheme': 'dark'}, reduced: {'prefers-reduced-transparency': 'reduce', 'prefers-reduced-motion': 'reduce'}}[appearance];
+if (!media) throw new Error(`TEST_APPEARANCE must be light, dark or reduced, not ${appearance}`);
 const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes', 'clips'];
 const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の本屋が今月で閉店するらしい。', title: '町のニュース', url: 'https://example.com/news/1'}));
 
@@ -17,6 +22,9 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
   try {
     const page = await browser.newPage({locale});
     page.setDefaultTimeout(10000);
+    // Playwright has no option for prefers-reduced-transparency, so all the media features go through CDP.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setEmulatedMedia', {features: Object.entries(media).map(([name, value]) => ({name, value}))});
     const failures = [];
     let scans = 0;
     const open = async (width, hash) => {
@@ -37,6 +45,20 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
 
     await page.goto(url);
     const lessons = await page.evaluate(() => JSON.parse(document.getElementById('pack-data').textContent).lessons.map(l => l.id));
+    for (const [name, value] of Object.entries(media)) {
+      if (!(await page.evaluate(q => matchMedia(q).matches, `(${name}: ${value})`))) throw new Error(`could not emulate ${name}: ${value}`);
+    }
+    // Glass where it belongs, and a solid, still page when the system asks for less transparency and motion.
+    await page.setViewportSize({width: 1440, height: 900});
+    const glass = await page.evaluate(() => ['.sidebar', '#tutor-dialog'].map(sel => getComputedStyle(document.querySelector(sel)).backdropFilter)
+      .concat(getComputedStyle(document.querySelector('.workspace>header'), '::before').backdropFilter));
+    if (appearance === 'reduced') {
+      if (glass.some(f => f !== 'none')) failures.push(`reduced transparency: glass still blurred (${glass.join(', ')})`);
+      const alpha = await page.evaluate(() => { const c = document.createElement('canvas').getContext('2d'); c.fillStyle = getComputedStyle(document.querySelector('.sidebar')).backgroundColor; c.fillRect(0, 0, 1, 1); return c.getImageData(0, 0, 1, 1).data[3] / 255; });
+      if (alpha < 0.95) failures.push(`reduced transparency: sidebar background is only ${alpha.toFixed(2)} opaque`);
+      const motion = await page.evaluate(() => { const b = document.querySelector('#tutor-open'); return getComputedStyle(b).transitionDuration; });
+      if (motion.split(',').some(d => parseFloat(d) > 0)) failures.push(`reduced motion: buttons still animate (${motion})`);
+    } else if (glass.some(f => !f.startsWith('blur'))) failures.push(`glass missing on sidebar, tutor panel or top bar (${glass.join(', ')})`);
 
     for (const width of [1440, 390]) {
       for (const lesson of lessons) {
@@ -111,7 +133,7 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
       process.exitCode = 1;
       return;
     }
-    console.log(`PASS (${locale}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu, dialogs and web clips) and keyboard paths.`);
+    console.log(`PASS (${locale}, ${appearance}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu, dialogs and web clips) and keyboard paths.`);
   } finally {
     await browser.close();
   }

@@ -906,6 +906,8 @@ $('tutor-form').onsubmit = async e => {
 // ------------------------------------------------------------------ boot
 
 document.addEventListener('click', e => { document.querySelectorAll('.context-info[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
+// The top bar sticks on wide screens; the player and the reading companion stick just below it.
+if (window.ResizeObserver) new ResizeObserver(([entry]) => document.documentElement.style.setProperty('--head-h', Math.ceil(entry.target.offsetHeight) + 'px')).observe(document.querySelector('.workspace>header'));
 renderLearnerSelect();
 switchCourse(LESSONS[0].id);
 restoreStudyPosition();

@@ -90,17 +90,34 @@ class Extension(unittest.TestCase):
 
 
 class Appearance(unittest.TestCase):
-    """Light and dark come from the tokens in glass.css, so the older stylesheets must not hard-code colours."""
+    """Classic is the default look; glass (glass.css) is optional. The older stylesheets name each colour through a
+    token with the classic colour as its fallback, so the classic look needs no tokens and glass can recolour it."""
 
     def test_layout_styles_use_tokens_only(self):
         import re
         src = Path(__file__).resolve().parent / 'src'
+        colour = r'#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|(?<![\w-])(?:white|black)(?![\w-])'
         for name in ('base.css', 'theme.css', 'app.css'):
             text = re.sub(r'@media print\{(?:[^{}]|\{[^{}]*\})*\}', '', (src / name).read_text(encoding='utf-8'))
-            values = re.findall(r'[\w-]+\s*:\s*([^;{}]+)', text)
+            text = re.sub(r'var\(--[\w-]+, (?:%s)\)' % colour, 'var()', text)
+            # Tinted shadows are part of the classic look and stay as they are.
+            values = [v for p, v in re.findall(r'([\w-]+)\s*:\s*([^;{}]+)', text) if p not in ('box-shadow', '--shadow')]
             fixed = [v for v in values if re.search(r'#[0-9a-fA-F]{3,8}\b|(?<![\w-])(?:white|black)(?![\w-])', v)]
             self.assertEqual(fixed, [], name)
         page = (src / 'page.html').read_text(encoding='utf-8')
         self.assertLess(page.index('@@SOURCE:app.css@@'), page.index('@@SOURCE:apple-kit.css@@'))
         self.assertLess(page.index('@@SOURCE:apple-kit.css@@'), page.index('@@SOURCE:glass.css@@'))
-        self.assertIn('<body class="ap">', page)
+        self.assertIn('<body>', page)
+        self.assertLess(page.index("localStorage.getItem('bunmyaku:look')"), page.index('</head>'))
+
+    def test_glass_rules_only_apply_with_the_glass_look(self):
+        import re
+        text = (Path(__file__).resolve().parent / 'src' / 'glass.css').read_text(encoding='utf-8')
+        text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+        text = re.sub(r'@keyframes[^{]*\{(?:[^{}]|\{[^{}]*\})*\}', '', text)
+        for selectors in re.findall(r'(?:^|[{};])\s*([^{};@]+?)\s*\{', text):
+            for sel in selectors.split(','):
+                sel = sel.strip()
+                if sel == ':root':
+                    continue
+                self.assertTrue(sel.startswith(('.ap', ':where(.ap)', 'html.ap')), sel)

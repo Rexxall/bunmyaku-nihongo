@@ -27,7 +27,7 @@ Bunmyaku is a local web app. It ships no textbook. You (or your AI agent) arrang
 | Tutor | Select any word or sentence and ask; the server sends the model only the proofread text of the current lesson. No API key? Copy the assembled prompt instead |
 | Web clips | Select Japanese on any page and send it to the study desk with a bookmarklet or the browser extension (Chrome, Edge); once saved under the current profile, ask the tutor about it or export it as plain text and turn it into a lesson with the importer |
 | Records | Notes, answers and listening progress are saved in the browser per learner profile; one profile by default, more if you study with someone; export to Markdown, and vocabulary to Anki with the sentence it came from and your own explanation |
-| Interface | Chinese, Japanese or English, following the browser language; switch in the top-right menu. Course content itself is not translated. Light and dark follow the system setting; when the system asks for reduced transparency or reduced motion, floating panels turn solid and nothing animates |
+| Interface | Chinese, Japanese or English, following the browser language; switch in the top-right menu. Course content itself is not translated. Pick the look in the same menu: classic (default) or glass. The glass look follows the system light or dark setting; when the system asks for reduced transparency or reduced motion, floating panels turn solid and nothing animates |
 
 The server is a single Python standard-library script. No database, no account, no cloud. Content comes from a folder on your machine, keys stay on your machine, and tutor calls are billed to your own API account.
 
@@ -36,6 +36,8 @@ The server is a single Python standard-library script. No database, no account, 
 ![Exercises and tutor: answers in place, selected text carried into the question, copy-prompt mode without a key](docs/assets/study-tutor.png)
 
 ![On a phone: reading with furigana, a vocabulary card, the listening player](docs/assets/study-mobile.png)
+
+![The optional glass look (Appearance in the top-right menu): sidebar, top bar and reading companion float over the text](docs/assets/study-glass.png)
 
 ## Three-minute start
 

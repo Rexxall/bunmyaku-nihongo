@@ -1,19 +1,19 @@
 /* Bunmyaku additions on top of the editorial theme: pack-driven pieces that the original theme did not have. */
-rt.unverified,ruby.unverified rt{text-decoration:underline dotted var(--grammar);color:var(--grammar)}
+rt.unverified,ruby.unverified rt{text-decoration:underline dotted var(--grammar, #b48a3a);color:var(--grammar, #8a6a2e)}
 .ruby-legend{font-size:12px;color:var(--muted);margin:8px 0 0}
 .sentence-list{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:10px}
-.sentence-card{background:var(--group);border:1px solid var(--sep);border-radius:12px;padding:14px 16px}
+.sentence-card{background:var(--group, #f3f6f1);border:1px solid var(--sep, #dfe7da);border-radius:12px;padding:14px 16px}
 .sentence-card p{margin:0 0 6px}
 .sentence-card .sentence-ja{font-size:17px;line-height:2}
 .sentence-card h4{margin:10px 0 4px;font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
-.sentence-card .sentence-example{border-left:3px solid var(--sep);padding-left:10px;margin-top:8px}
+.sentence-card .sentence-example{border-left:3px solid var(--sep, #c9d7c6);padding-left:10px;margin-top:8px}
 .sentence-toggle{margin-top:12px}
 .choice-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
-.choice-list li{padding:8px 12px;border:1px solid var(--sep);border-radius:9px;background:var(--group)}
-.choice-list li[data-correct=true].revealed{background:var(--accent-tint);border-color:var(--good);font-weight:600}
+.choice-list li{padding:8px 12px;border:1px solid var(--sep, #e0e7db);border-radius:9px;background:var(--group, #fbfcf8)}
+.choice-list li[data-correct=true].revealed{background:var(--accent-tint, #e6efd9);border-color:var(--good, #96b779);font-weight:600}
 .choice-list li span{color:var(--muted);margin-right:8px}
 .note-grid{display:grid;gap:12px}
-.note-card{background:var(--paper);border:1px solid var(--sep);border-radius:12px;padding:14px 18px}
+.note-card{background:var(--paper);border:1px solid var(--sep, #dfe7da);border-radius:12px;padding:14px 18px}
 .note-card h3{margin:0 0 6px;font-size:16px}
 .note-card p{margin:4px 0;white-space:pre-wrap}
 .empty-panel{color:var(--muted);padding:30px 0}
@@ -21,12 +21,12 @@ rt.unverified,ruby.unverified rt{text-decoration:underline dotted var(--grammar)
 .listen-speaker{min-width:4em;color:var(--muted);font-size:13px;padding-top:4px}
 .listen-line-ja p{margin:0;flex:1;font-size:17px;line-height:2}
 .listen-hide-translation .listen-study-translation,.listen-hide-transcript .listen-line-ja p{display:none}
-.listen-no-audio{padding:12px 16px;border:1px dashed var(--sep);border-radius:10px;color:var(--muted);margin-bottom:14px}
+.listen-no-audio{padding:12px 16px;border:1px dashed var(--sep, #cdd9cf);border-radius:10px;color:var(--muted);margin-bottom:14px}
 #profiles-text{width:100%;min-height:100px;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px}
 .copy-mode #tutor-send{display:none}
-.status-chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--group);color:var(--label-2);margin-left:6px;vertical-align:middle}
-.status-chip.machine{background:var(--hl);color:var(--grammar)}
-.status-chip.unverified{background:var(--bad-tint);color:var(--bad)}
+.status-chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--group, #eef2e9);color:var(--label-2, #5d7262);margin-left:6px;vertical-align:middle}
+.status-chip.machine{background:var(--hl, #f6ecd8);color:var(--grammar, #8a6a2e)}
+.status-chip.unverified{background:var(--bad-tint, #f3e2e2);color:var(--bad, #8a3e3e)}
 @media print{#tutor-open,.sidebar .tabs,.head-actions{display:none}}
 /* Grid rules for the word and grammar panels (the theme's originals were tied to removed panels). */
 .word-grid,.grammar-grid{gap:18px;align-items:start}
@@ -40,7 +40,7 @@ rt.unverified,ruby.unverified rt{text-decoration:underline dotted var(--grammar)
 }
 .coursebar .course-count{font-variant-numeric:tabular-nums;letter-spacing:.06em;white-space:nowrap}
 .coursebar select{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
-.sidebar-bottom small{display:block;font-size:11px;line-height:1.6;color:var(--label-2)}
+.sidebar-bottom small{display:block;font-size:11px;line-height:1.6;color:var(--label-2, #7d8f82)}
 .workspace header p{text-wrap:pretty}
 .passage-title,.section-bar h2,.grammarcard h3,.workcard h3{text-wrap:balance}
 ruby{ruby-align:center}
@@ -64,7 +64,7 @@ main{padding-bottom:120px}
 .more-menu .course-context{margin:0 0 4px;padding:0}
 body:not(.hide-ruby) .detail h3:has(ruby)+.kana{display:none}
 .clip-help{margin:0 0 12px;max-width:760px}
-.clip-install{background:var(--paper);border:1px solid var(--sep);border-radius:12px;padding:10px 16px;margin:0 0 16px;max-width:760px}
+.clip-install{background:var(--paper);border:1px solid var(--sep, #dfe7da);border-radius:12px;padding:10px 16px;margin:0 0 16px;max-width:760px}
 .clip-install summary{cursor:pointer;font-weight:600}
 .clip-install p{margin:8px 0}
 .bookmarklet{display:inline-block;padding:4px 14px;border:1px dashed var(--blue);border-radius:999px;font-weight:600;text-decoration:none;cursor:grab}
@@ -75,4 +75,4 @@ body:not(.hide-ruby) .detail h3:has(ruby)+.kana{display:none}
 .clip-card .toolbar{gap:8px;margin:8px 0 0}
 .clip-incoming{border:2px solid var(--blue);margin-bottom:16px}
 .clip-incoming h3:focus{outline:none}
-.clip-desk-url{overflow-wrap:anywhere;font-size:13px;background:var(--group);border-radius:6px;padding:1px 6px}
+.clip-desk-url{overflow-wrap:anywhere;font-size:13px;background:var(--group, #eef3ec);border-radius:6px;padding:1px 6px}

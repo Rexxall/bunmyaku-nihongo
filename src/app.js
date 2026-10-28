@@ -28,7 +28,7 @@ const store = {
   },
 };
 const K = {
-  profiles: 'bunmyaku:profiles', learner: 'bunmyaku:learner', ruby: 'bunmyaku:ruby', tutorWidth: 'bunmyaku:tutor-width',
+  profiles: 'bunmyaku:profiles', learner: 'bunmyaku:learner', ruby: 'bunmyaku:ruby', look: 'bunmyaku:look', tutorWidth: 'bunmyaku:tutor-width',
   migrated: 'bunmyaku:migrated-v1', resume: `bunmyaku:${PACK_ID}:resume`,
   notes: lesson => `bunmyaku:${PACK_ID}:${lesson}:notes`,
 };
@@ -700,6 +700,9 @@ $('ui-lang').onchange = e => {
   const params = new URLSearchParams(location.hash.replace(/^#/, '')); params.delete('lang');
   saveStudyPosition(); history.replaceState(null, '', location.pathname + location.search + (params.size ? '#' + params : '')); location.reload();
 };
+// Classic is the default look; glass (light and dark following the system) is the alternative. page.html applies it before the first paint.
+$('ui-look').value = document.documentElement.classList.contains('ap') ? 'glass' : 'classic';
+$('ui-look').onchange = e => { document.documentElement.classList.toggle('ap', e.target.value === 'glass'); store.set(K.look, e.target.value); };
 
 // The header menu closes after an action, on Escape, and on a click elsewhere.
 const moreMenu = document.querySelector('.header-more');

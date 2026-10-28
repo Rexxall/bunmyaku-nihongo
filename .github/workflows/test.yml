@@ -71,6 +71,7 @@ jobs:
             TEST_LOCALE=$locale node test_layout.cjs
             TEST_LOCALE=$locale node test_a11y.cjs
           done
-          for appearance in dark reduced; do
-            TEST_APPEARANCE=$appearance node test_a11y.cjs
+          TEST_LOOK=glass node test_layout.cjs
+          for appearance in light dark reduced; do
+            TEST_LOOK=glass TEST_APPEARANCE=$appearance node test_a11y.cjs
           done

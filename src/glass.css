@@ -1,8 +1,9 @@
-/* Glass layer. The page follows the shared glass kit (apple-kit.css): solid content (passage, cards,
+/* Glass look (optional; html.ap, set from the more-menu). Without it the page keeps the classic theme.
+   Glass layer. The page follows the shared glass kit (apple-kit.css): solid content (passage, cards,
    lists), glass only for what floats above it (sidebar, top bar, tutor panel, player, sheets, menus, toasts).
    The web page has no Obsidian, so the Obsidian variables the kit reads are defined here, light and dark,
-   following the system appearance. The older stylesheets only use the semantic tokens below. */
-:root{
+   following the system appearance. The older stylesheets use the semantic tokens below with their classic colours as fallbacks. */
+.ap{
   color-scheme:light dark;
   --background-primary:#fff;--text-normal:#1d1d1f;--text-muted:#6e6e73;--text-faint:#86868b;--text-on-accent:#fff;
   --interactive-accent:#0071e3;--color-green:#248a3d;--color-orange:#b25000;--color-red:#d70015;
@@ -24,12 +25,11 @@
   --grammar:#7b4fc9;--grammar-tint:color-mix(in srgb,#7b4fc9 9%,transparent);
   --scrim:rgb(0 0 0 / .24);
   --card-shadow:0 0 0 .5px color-mix(in srgb,var(--text-normal) 12%,transparent),0 1px 2px rgb(0 0 0 / .04),0 4px 14px rgb(0 0 0 / .04);
-  --head-h:62px;
 }
 /* Text-heavy floating surfaces (menus, popovers, sheets, the tutor panel) use a denser glass, as HIG Materials asks. */
 .ap{--glass-dense:color-mix(in srgb,var(--background-primary) 88%,transparent);--glass-sheet:color-mix(in srgb,var(--background-primary) 96%,transparent)}
 @media(prefers-color-scheme:dark){
-  :root{
+  .ap{
     --background-primary:#1c1c1e;--text-normal:#f5f5f7;--text-muted:#a1a1a6;--text-faint:#8e8e93;
     --interactive-accent:#0071e3;--color-green:#30d158;--color-orange:#ff9f0a;--color-red:#ff6961;
     --page:#0f0f10;--label-3:#98989d;--accent:#4da3ff;
@@ -52,176 +52,177 @@
   .ap{--glass-dense:var(--ap-glass-solid);--glass-sheet:var(--ap-glass-solid);--ap-glass:var(--ap-glass-solid);--ap-glass-thin:var(--ap-glass-solid);--ap-blur:none;--ap-blur-thin:none;--ap-glint:transparent}
 }
 @media(prefers-contrast:more){
-  :root{--sep:color-mix(in srgb,var(--text-normal) 34%,transparent);--sep-strong:color-mix(in srgb,var(--text-normal) 50%,transparent);--fill:color-mix(in srgb,var(--text-normal) 14%,transparent);--label-2:var(--text-normal);--label-3:var(--text-muted)}
+  .ap{--sep:color-mix(in srgb,var(--text-normal) 34%,transparent);--sep-strong:color-mix(in srgb,var(--text-normal) 50%,transparent);--fill:color-mix(in srgb,var(--text-normal) 14%,transparent);--label-2:var(--text-normal);--label-3:var(--text-muted)}
   .ap{--glass-dense:var(--background-primary);--glass-sheet:var(--background-primary);--ap-glass:var(--background-primary);--ap-glass-thin:var(--background-primary);--ap-blur:none;--ap-blur-thin:none}
 }
 
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.ap{--glass-dense:var(--ap-glass-solid);--glass-sheet:var(--ap-glass-solid)}}
 
 /* ---------- Page ---------- */
-html{scroll-padding-top:calc(var(--head-h) + 12px)}
-body.ap{font:15px/1.65 var(--ap-font);background:var(--page);color:var(--label);-webkit-font-smoothing:antialiased}
-.workspace::before{display:none}
-h1,h2,h3{letter-spacing:-.01em}
-::selection{background:color-mix(in srgb,var(--interactive-accent) 24%,transparent)}
-a{color:var(--accent)}
+:root{--head-h:62px}
+html.ap{scroll-padding-top:calc(var(--head-h) + 12px)}
+:where(.ap) body{font:15px/1.65 var(--ap-font);background:var(--page);color:var(--label);-webkit-font-smoothing:antialiased}
+:where(.ap) .workspace::before{display:none}
+:where(.ap) h1,:where(.ap) h2,:where(.ap) h3{letter-spacing:-.01em}
+:where(.ap) ::selection{background:color-mix(in srgb,var(--interactive-accent) 24%,transparent)}
+:where(.ap) a{color:var(--accent)}
 
 /* ---------- Controls: capsules, no borders ---------- */
-button{border:0;border-radius:var(--ap-r-pill);background:var(--fill);color:var(--label);font-weight:500;transition:background var(--ap-fast) var(--ap-ease),transform var(--ap-fast) var(--ap-ease),box-shadow var(--ap-fast) var(--ap-ease)}
-button:hover:not(:disabled){background:var(--fill-strong);border-color:transparent}
-button:active:not(:disabled){transform:scale(.97)}
-button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-button.primary,.primary,#tutor-open{background:var(--accent-fill);color:var(--on-accent);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25)}
-button.primary:hover:not(:disabled),#tutor-open:hover{background:color-mix(in srgb,var(--accent-fill) 88%,black);color:var(--on-accent)}
-select,input[type=search],input[type=text],textarea,#profiles-text{border:0;border-radius:var(--ap-r-field);background:var(--surface);color:var(--label);box-shadow:var(--ap-hair)}
-select{background:var(--fill)}
-select:hover{background:var(--fill-strong)}
-input[type=search]{border-radius:var(--ap-r-pill);background:var(--fill);box-shadow:none;padding-inline:14px}
-textarea:focus,input[type=search]:focus,input[type=text]:focus{outline:none;box-shadow:0 0 0 1px var(--focus),0 0 0 4px var(--accent-tint)}
+:where(.ap) button{border:0;border-radius:var(--ap-r-pill);background:var(--fill);color:var(--label);font-weight:500;transition:background var(--ap-fast) var(--ap-ease),transform var(--ap-fast) var(--ap-ease),box-shadow var(--ap-fast) var(--ap-ease)}
+:where(.ap) button:hover:not(:disabled){background:var(--fill-strong);border-color:transparent}
+:where(.ap) button:active:not(:disabled){transform:scale(.97)}
+:where(.ap) button:focus-visible,:where(.ap) a:focus-visible,:where(.ap) summary:focus-visible,:where(.ap) select:focus-visible,:where(.ap) input:focus-visible,:where(.ap) textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+:where(.ap) button.primary,:where(.ap) .primary,:where(.ap) #tutor-open{background:var(--accent-fill);color:var(--on-accent);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25)}
+:where(.ap) button.primary:hover:not(:disabled),:where(.ap) #tutor-open:hover{background:color-mix(in srgb,var(--accent-fill) 88%,black);color:var(--on-accent)}
+:where(.ap) select,:where(.ap) input[type=search],:where(.ap) input[type=text],:where(.ap) textarea,:where(.ap) #profiles-text{border:0;border-radius:var(--ap-r-field);background:var(--surface);color:var(--label);box-shadow:var(--ap-hair)}
+:where(.ap) select{background:var(--fill)}
+:where(.ap) select:hover{background:var(--fill-strong)}
+:where(.ap) input[type=search]{border-radius:var(--ap-r-pill);background:var(--fill);box-shadow:none;padding-inline:14px}
+:where(.ap) textarea:focus,:where(.ap) input[type=search]:focus,:where(.ap) input[type=text]:focus{outline:none;box-shadow:0 0 0 1px var(--focus),0 0 0 4px var(--accent-tint)}
 /* Round check marks (vocabulary "can explain" and similar) */
-input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;margin:0;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--sep-strong);background:var(--surface);display:inline-grid;place-items:center;cursor:pointer;vertical-align:middle;transition:background var(--ap-fast) var(--ap-ease)}
-input[type=checkbox]:checked{background:var(--accent-fill);box-shadow:none}
-input[type=checkbox]:checked::after{content:"";width:4px;height:8px;border:solid var(--on-accent);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+:where(.ap) input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;margin:0;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--sep-strong);background:var(--surface);display:inline-grid;place-items:center;cursor:pointer;vertical-align:middle;transition:background var(--ap-fast) var(--ap-ease)}
+:where(.ap) input[type=checkbox]:checked{background:var(--accent-fill);box-shadow:none}
+:where(.ap) input[type=checkbox]:checked::after{content:"";width:4px;height:8px;border:solid var(--on-accent);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
 /* On/off settings are switches; the label next to each still names it */
-#ruby-toggle,#vocab-toggle,#grammar-toggle,#parallel,.global-ruby-switch input{width:32px;height:20px;border-radius:var(--ap-r-pill);background:var(--fill-strong);box-shadow:none;position:relative;display:inline-block}
-#ruby-toggle::after,#vocab-toggle::after,#grammar-toggle::after,#parallel::after,.global-ruby-switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);transform:none;transition:transform var(--ap-base) var(--ap-ease-spring)}
-#ruby-toggle:checked,#vocab-toggle:checked,#grammar-toggle:checked,#parallel:checked,.global-ruby-switch input:checked{background:var(--accent-fill)}
-#ruby-toggle:checked::after,#vocab-toggle:checked::after,#grammar-toggle:checked::after,#parallel:checked::after,.global-ruby-switch input:checked::after{transform:translateX(12px)}
-.bar-controls input[type=checkbox],.global-ruby-switch input,.toolbar input[type=checkbox]{width:32px;height:20px;min-height:0;min-width:0;padding:0}
-.bar-controls input[type=checkbox]:not(:checked)~.legend-word,.bar-controls input[type=checkbox]:not(:checked)~.legend-grammar{background:none;border-bottom-color:transparent}
-.detail .jp{background:var(--surface)}
+:where(.ap) #ruby-toggle,:where(.ap) #vocab-toggle,:where(.ap) #grammar-toggle,:where(.ap) #parallel,:where(.ap) .global-ruby-switch input{width:32px;height:20px;border-radius:var(--ap-r-pill);background:var(--fill-strong);box-shadow:none;position:relative;display:inline-block}
+:where(.ap) #ruby-toggle::after,:where(.ap) #vocab-toggle::after,:where(.ap) #grammar-toggle::after,:where(.ap) #parallel::after,:where(.ap) .global-ruby-switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);transform:none;transition:transform var(--ap-base) var(--ap-ease-spring)}
+:where(.ap) #ruby-toggle:checked,:where(.ap) #vocab-toggle:checked,:where(.ap) #grammar-toggle:checked,:where(.ap) #parallel:checked,:where(.ap) .global-ruby-switch input:checked{background:var(--accent-fill)}
+:where(.ap) #ruby-toggle:checked::after,:where(.ap) #vocab-toggle:checked::after,:where(.ap) #grammar-toggle:checked::after,:where(.ap) #parallel:checked::after,:where(.ap) .global-ruby-switch input:checked::after{transform:translateX(12px)}
+:where(.ap) .bar-controls input[type=checkbox],:where(.ap) .global-ruby-switch input,:where(.ap) .toolbar input[type=checkbox]{width:32px;height:20px;min-height:0;min-width:0;padding:0}
+:where(.ap) .bar-controls input[type=checkbox]:not(:checked)~.legend-word,:where(.ap) .bar-controls input[type=checkbox]:not(:checked)~.legend-grammar{background:none;border-bottom-color:transparent}
+:where(.ap) .detail .jp{background:var(--surface)}
 
 /* ---------- Sidebar: a floating glass pane on wide screens ---------- */
-.sidebar{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
-@media(min-width:1101px){.sidebar{inset:8px auto 8px 8px;width:214px;border-radius:20px;padding:24px 12px 18px}}
-.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(160deg,#3d9bff,#0060d6);color:#fff;font:600 21px/1 var(--font-reading);box-shadow:inset 0 1px 0 rgb(255 255 255 / .35),0 2px 6px rgb(0 60 160 / .25)}
-.brand strong{font:var(--ap-title-2);letter-spacing:-.01em}
-.brand small{color:var(--label-2)}
-.coursebar label,.nav-section{font:var(--ap-caption);letter-spacing:.02em;color:var(--label-2);text-transform:none}
-.coursebar select{background:var(--fill);box-shadow:none;border-radius:var(--ap-r-field)}
-.coursebar button{background:transparent;color:var(--label-2)}
-.tabs button{border-radius:var(--ap-r-field);background:transparent;color:var(--label);font-weight:500;box-shadow:none}
-.tabs button::before{color:var(--label-2);font-variant-numeric:tabular-nums}
-.tabs button:hover:not(:disabled){background:var(--fill)}
-.tabs button[aria-selected=true],.tabs button[aria-selected=true]:hover{background:var(--accent-fill);color:var(--on-accent);box-shadow:none}
-.tabs button[aria-selected=true]::before{color:color-mix(in srgb,var(--on-accent) 80%,transparent)}
-.sidebar-bottom span{font-family:var(--font-reading);color:var(--label-2)}
-.sidebar-bottom small{color:var(--label-2)}
+:where(.ap) .sidebar{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
+@media(min-width:1101px){:where(.ap) .sidebar{inset:8px auto 8px 8px;width:214px;border-radius:20px;padding:24px 12px 18px}}
+:where(.ap) .brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(160deg,#3d9bff,#0060d6);color:#fff;font:600 21px/1 var(--font-reading);box-shadow:inset 0 1px 0 rgb(255 255 255 / .35),0 2px 6px rgb(0 60 160 / .25)}
+:where(.ap) .brand strong{font:var(--ap-title-2);letter-spacing:-.01em}
+:where(.ap) .brand small{color:var(--label-2)}
+:where(.ap) .coursebar label,:where(.ap) .nav-section{font:var(--ap-caption);letter-spacing:.02em;color:var(--label-2);text-transform:none}
+:where(.ap) .coursebar select{background:var(--fill);box-shadow:none;border-radius:var(--ap-r-field)}
+:where(.ap) .coursebar button{background:transparent;color:var(--label-2)}
+:where(.ap) .tabs button{border-radius:var(--ap-r-field);background:transparent;color:var(--label);font-weight:500;box-shadow:none}
+:where(.ap) .tabs button::before{color:var(--label-2);font-variant-numeric:tabular-nums}
+:where(.ap) .tabs button:hover:not(:disabled){background:var(--fill)}
+:where(.ap) .tabs button[aria-selected=true],:where(.ap) .tabs button[aria-selected=true]:hover{background:var(--accent-fill);color:var(--on-accent);box-shadow:none}
+:where(.ap) .tabs button[aria-selected=true]::before{color:color-mix(in srgb,var(--on-accent) 80%,transparent)}
+:where(.ap) .sidebar-bottom span{font-family:var(--font-reading);color:var(--label-2)}
+:where(.ap) .sidebar-bottom small{color:var(--label-2)}
 @media(max-width:1100px){
-  .sidebar,.sidebar:has(.coursebar){background:var(--page);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 -.5px 0 var(--sep);border-radius:0}
+  :where(.ap) .sidebar,:where(.ap) .sidebar:has(.coursebar){background:var(--page);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 -.5px 0 var(--sep);border-radius:0}
 }
 
 /* ---------- Top bar: glass that content scrolls under ---------- */
 /* The glass sits on a layer behind the bar, not on the bar itself: a blur on the bar would stop the
    more-menu inside it from blurring the page (nested backdrop filters only see their parent). */
-.workspace>header{position:relative;z-index:9;background:transparent;border:0;box-shadow:inset 0 -.5px 0 var(--sep)}
-.workspace>header::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);pointer-events:none}
-@media(min-width:1101px){.workspace>header{position:sticky;top:0}}
-.workspace header h1{color:var(--label-2);letter-spacing:.02em;font-weight:500}
-.workspace header p{color:var(--label);font-weight:600}
-.header-more>summary{border-radius:var(--ap-r-pill);color:var(--label-2)}
-.header-more>summary:hover,.header-more[open]>summary{background:var(--fill)}
-.more-menu,.info-popover{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;border-radius:16px;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
-.more-menu button{background:transparent;text-align:left;border-radius:8px;font-weight:400}
-.more-menu button:hover:not(:disabled){background:var(--fill)}
+:where(.ap) .workspace>header{position:relative;z-index:9;background:transparent;border:0;box-shadow:inset 0 -.5px 0 var(--sep)}
+:where(.ap) .workspace>header::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);pointer-events:none}
+@media(min-width:1101px){:where(.ap) .workspace>header{position:sticky;top:0}}
+:where(.ap) .workspace header h1{color:var(--label-2);letter-spacing:.02em;font-weight:500}
+:where(.ap) .workspace header p{color:var(--label);font-weight:600}
+:where(.ap) .header-more>summary{border-radius:var(--ap-r-pill);color:var(--label-2)}
+:where(.ap) .header-more>summary:hover,:where(.ap) .header-more[open]>summary{background:var(--fill)}
+:where(.ap) .more-menu,:where(.ap) .info-popover{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;border-radius:16px;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
+:where(.ap) .more-menu button{background:transparent;text-align:left;border-radius:8px;font-weight:400}
+:where(.ap) .more-menu button:hover:not(:disabled){background:var(--fill)}
 
 /* ---------- Content layer: solid cards ---------- */
-.section-bar{border-bottom:0;box-shadow:inset 0 -.5px 0 var(--sep)}
-.section-bar h2{font:700 24px/1.3 var(--ap-font);letter-spacing:-.02em}
-.bar-controls button,.bar-controls select{border-radius:var(--ap-r-pill)}
-.button-pair{background:var(--fill);border-radius:var(--ap-r-pill);padding:2px;gap:0}
-.button-pair button,.button-pair button:first-child,.button-pair button:last-child{background:transparent;border:0;border-radius:var(--ap-r-pill)}
-.study-visibility,.mode-switch{background:var(--fill);border:0;border-radius:var(--ap-r-pill);padding:2px}
-.bar-controls .study-icon,.bar-controls .mode-switch button{border-radius:var(--ap-r-pill)}
-.bar-controls .study-icon[aria-pressed=true],.bar-controls .mode-switch button[aria-pressed=true],.bar-controls button[aria-pressed=true]{background:var(--surface);color:var(--label);box-shadow:inset 0 1px 0 var(--ap-glint),0 0 0 .5px var(--sep),0 2px 6px rgb(0 0 0 / .1)}
-.reading-grid,#grammar-grid,.paper,.workcard,.exercise-card,.listen-study-text,.note-card,.clip-card,.sentence-card{border:0;box-shadow:var(--card-shadow);background:var(--surface)}
-.reading-grid,#grammar-grid{border-radius:var(--ap-r-card)}
-.reading-grid .paper{box-shadow:none;background:transparent}
-.reading-grid .detail-shell{border:0;box-shadow:inset .5px 0 0 var(--sep);background:var(--group);border-radius:0 var(--ap-r-card) var(--ap-r-card) 0}
-@media(min-width:1101px){.reading-grid .detail-shell{top:calc(var(--head-h) + 12px)}.detail{max-height:calc(100vh - var(--head-h) - 40px)}}
-#word-grid .workcard,.paper,.listen-study-text{border-radius:var(--ap-r-card)}
-#grammar-grid .grammarcard,#exercise-body>.exercise-card{border-bottom:0;box-shadow:inset 0 -.5px 0 var(--sep)}
-#grammar-grid .grammarcard:last-child,#exercise-body>.exercise-card:last-child{box-shadow:none}
-#exercise-body:has(>.exercise-card){border-radius:var(--ap-r-card);box-shadow:var(--card-shadow);background:var(--surface)}
-#exercise-body>.exercise-card{box-shadow:inset 0 -.5px 0 var(--sep);background:transparent}
-.passage p,.passage-title,.sentence-card .sentence-ja,.listen-line-ja p,.ex-question{font-family:var(--font-reading)}
-.passage-title{font-weight:600;letter-spacing:.02em}
-.word{border-radius:4px}
+:where(.ap) .section-bar{border-bottom:0;box-shadow:inset 0 -.5px 0 var(--sep)}
+:where(.ap) .section-bar h2{font:700 24px/1.3 var(--ap-font);letter-spacing:-.02em}
+:where(.ap) .bar-controls button,:where(.ap) .bar-controls select{border-radius:var(--ap-r-pill)}
+:where(.ap) .button-pair{background:var(--fill);border-radius:var(--ap-r-pill);padding:2px;gap:0}
+:where(.ap) .button-pair button,:where(.ap) .button-pair button:first-child,:where(.ap) .button-pair button:last-child{background:transparent;border:0;border-radius:var(--ap-r-pill)}
+:where(.ap) .study-visibility,:where(.ap) .mode-switch{background:var(--fill);border:0;border-radius:var(--ap-r-pill);padding:2px}
+:where(.ap) .bar-controls .study-icon,:where(.ap) .bar-controls .mode-switch button{border-radius:var(--ap-r-pill)}
+:where(.ap) .bar-controls .study-icon[aria-pressed=true],:where(.ap) .bar-controls .mode-switch button[aria-pressed=true],:where(.ap) .bar-controls button[aria-pressed=true]{background:var(--surface);color:var(--label);box-shadow:inset 0 1px 0 var(--ap-glint),0 0 0 .5px var(--sep),0 2px 6px rgb(0 0 0 / .1)}
+:where(.ap) .reading-grid,:where(.ap) #grammar-grid,:where(.ap) .paper,:where(.ap) .workcard,:where(.ap) .exercise-card,:where(.ap) .listen-study-text,:where(.ap) .note-card,:where(.ap) .clip-card,:where(.ap) .sentence-card{border:0;box-shadow:var(--card-shadow);background:var(--surface)}
+:where(.ap) .reading-grid,:where(.ap) #grammar-grid{border-radius:var(--ap-r-card)}
+:where(.ap) .reading-grid .paper{box-shadow:none;background:transparent}
+:where(.ap) .reading-grid .detail-shell{border:0;box-shadow:inset .5px 0 0 var(--sep);background:var(--group);border-radius:0 var(--ap-r-card) var(--ap-r-card) 0}
+@media(min-width:1101px){:where(.ap) .reading-grid .detail-shell{top:calc(var(--head-h) + 12px)}:where(.ap) .detail{max-height:calc(100vh - var(--head-h) - 40px)}}
+:where(.ap) #word-grid .workcard,:where(.ap) .paper,:where(.ap) .listen-study-text{border-radius:var(--ap-r-card)}
+:where(.ap) #grammar-grid .grammarcard,:where(.ap) #exercise-body>.exercise-card{border-bottom:0;box-shadow:inset 0 -.5px 0 var(--sep)}
+:where(.ap) #grammar-grid .grammarcard:last-child,:where(.ap) #exercise-body>.exercise-card:last-child{box-shadow:none}
+:where(.ap) #exercise-body:has(>.exercise-card){border-radius:var(--ap-r-card);box-shadow:var(--card-shadow);background:var(--surface)}
+:where(.ap) #exercise-body>.exercise-card{box-shadow:inset 0 -.5px 0 var(--sep);background:transparent}
+:where(.ap) .passage p,:where(.ap) .passage-title,:where(.ap) .sentence-card .sentence-ja,:where(.ap) .listen-line-ja p,:where(.ap) .ex-question{font-family:var(--font-reading)}
+:where(.ap) .passage-title{font-weight:600;letter-spacing:.02em}
+:where(.ap) .word{border-radius:4px}
 /* Furigana over a highlight keeps full contrast */
-.word rt,.grammar rt,.grammarcard blockquote rt,.inline-fill rt,mark rt{color:var(--label)}
-.passage .word:hover,.passage .word.selected,.word.selected{background:var(--hl-strong);box-shadow:0 2px 0 var(--hl-edge)}
-.grammar{border-bottom-color:var(--grammar);background:var(--grammar-tint)}
-.grammarcard h3{color:var(--label);font-weight:600}
-.grammarcard blockquote{border-left:3px solid var(--grammar);background:var(--grammar-tint);border-radius:0 10px 10px 0}
-.workcard .jp,.detail .jp{border-left:0;border-radius:10px;background:var(--group)}
-.detail{background:transparent;border:0}
-.detail-cap{color:var(--label-2)}
-.hint{border-left:0;border-radius:var(--ap-r-group);background:var(--group);color:var(--label-2)}
+:where(.ap) .word rt,:where(.ap) .grammar rt,:where(.ap) .grammarcard blockquote rt,:where(.ap) .inline-fill rt,:where(.ap) mark rt{color:var(--label)}
+:where(.ap) .passage .word:hover,:where(.ap) .passage .word.selected,:where(.ap) .word.selected{background:var(--hl-strong);box-shadow:0 2px 0 var(--hl-edge)}
+:where(.ap) .grammar{border-bottom-color:var(--grammar);background:var(--grammar-tint)}
+:where(.ap) .grammarcard h3{color:var(--label);font-weight:600}
+:where(.ap) .grammarcard blockquote{border-left:3px solid var(--grammar);background:var(--grammar-tint);border-radius:0 10px 10px 0}
+:where(.ap) .workcard .jp,:where(.ap) .detail .jp{border-left:0;border-radius:10px;background:var(--group)}
+:where(.ap) .detail{background:transparent;border:0}
+:where(.ap) .detail-cap{color:var(--label-2)}
+:where(.ap) .hint{border-left:0;border-radius:var(--ap-r-group);background:var(--group);color:var(--label-2)}
 /* Neutral fills; blue stays for selection and the main action */
-.simple-chips span,.chat-content code,.answer-button,.reveal-button[aria-expanded=true],.mode-switch{background:var(--fill)}
-.bar-controls .study-icon:hover,.context-info>summary:hover,.context-info[open]>summary,.ask-exercise:hover{background:var(--fill)}
-.detail-shell,.tutor-open .detail-shell{background:var(--group)}
-.inline-fill,.listen-choices>[data-correct=true]{background:color-mix(in srgb,var(--good) 13%,transparent);border-bottom-color:var(--good)}
-.simple-chips span,.status-chip{border-radius:var(--ap-r-pill)}
-.status-chip{background:var(--fill);color:var(--label-2)}
-.status-chip.machine{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
-.status-chip.unverified{background:var(--bad-tint);color:var(--bad)}
-rt.unverified,ruby.unverified rt{text-decoration-color:var(--warn);color:var(--warn)}
-.choice-list li{border:0;box-shadow:var(--ap-hair);background:var(--surface);border-radius:10px}
-.choice-list li[data-correct=true].revealed{background:color-mix(in srgb,var(--good) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent)}
-.answer-panel,.exercise-card .answer,.explain-panel,.hint-panel{border:0;border-radius:var(--ap-r-group)}
-.answer-panel,.exercise-card .answer{background:color-mix(in srgb,var(--good) 10%,transparent)}
-.sentence-card .sentence-example{border-left-color:var(--sep-strong)}
-.listen-no-audio{border:0;background:var(--group);border-radius:var(--ap-r-group)}
-.suggestion{border:0;background:var(--fill)}
-.empty-panel{color:var(--label-2)}
-.skip-link{background:var(--surface);color:var(--label);box-shadow:var(--ap-shadow-2)}
+:where(.ap) .simple-chips span,:where(.ap) .chat-content code,:where(.ap) .answer-button,:where(.ap) .reveal-button[aria-expanded=true],:where(.ap) .mode-switch{background:var(--fill)}
+:where(.ap) .bar-controls .study-icon:hover,:where(.ap) .context-info>summary:hover,:where(.ap) .context-info[open]>summary,:where(.ap) .ask-exercise:hover{background:var(--fill)}
+:where(.ap) .detail-shell,:where(.ap) .tutor-open .detail-shell{background:var(--group)}
+:where(.ap) .inline-fill,:where(.ap) .listen-choices>[data-correct=true]{background:color-mix(in srgb,var(--good) 13%,transparent);border-bottom-color:var(--good)}
+:where(.ap) .simple-chips span,:where(.ap) .status-chip{border-radius:var(--ap-r-pill)}
+:where(.ap) .status-chip{background:var(--fill);color:var(--label-2)}
+:where(.ap) .status-chip.machine{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
+:where(.ap) .status-chip.unverified{background:var(--bad-tint);color:var(--bad)}
+:where(.ap) rt.unverified,:where(.ap) ruby.unverified rt{text-decoration-color:var(--warn);color:var(--warn)}
+:where(.ap) .choice-list li{border:0;box-shadow:var(--ap-hair);background:var(--surface);border-radius:10px}
+:where(.ap) .choice-list li[data-correct=true].revealed{background:color-mix(in srgb,var(--good) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent)}
+:where(.ap) .answer-panel,:where(.ap) .exercise-card .answer,:where(.ap) .explain-panel,:where(.ap) .hint-panel{border:0;border-radius:var(--ap-r-group)}
+:where(.ap) .answer-panel,:where(.ap) .exercise-card .answer{background:color-mix(in srgb,var(--good) 10%,transparent)}
+:where(.ap) .sentence-card .sentence-example{border-left-color:var(--sep-strong)}
+:where(.ap) .listen-no-audio{border:0;background:var(--group);border-radius:var(--ap-r-group)}
+:where(.ap) .suggestion{border:0;background:var(--fill)}
+:where(.ap) .empty-panel{color:var(--label-2)}
+:where(.ap) .skip-link{background:var(--surface);color:var(--label);box-shadow:var(--ap-shadow-2)}
 
 /* ---------- Floating: player, tutor, sheets, drawer, toast ---------- */
-.listen-player{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;border-radius:18px;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
-@media(min-width:1101px){.listen-player{top:calc(var(--head-h) + 8px)}}
-.listen-player-top button,.listen-player-top select{background:var(--fill);border:0;border-radius:var(--ap-r-pill)}
-.listen-transport button{border-radius:var(--ap-r-pill)}
-.listen-transport #listen-play{background:var(--accent-fill);color:var(--on-accent);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25)}
-.listen-transport #listen-replay{background:var(--fill-strong);color:var(--label)}
-.listen-clip{border:0;background:var(--fill);border-radius:var(--ap-r-pill)}
-.listen-clip button+button{border-left:.5px solid var(--sep)}
-#tutor-dialog{background:var(--glass-sheet);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;box-shadow:inset .5px 0 0 var(--ap-rim),-.5px 0 0 var(--sep),var(--ap-shadow-2)}
-#tutor-dialog .dialogbar{background:transparent;border:0}
-#tutor-close{border-radius:50%;background:var(--fill)}
-#tutor-selection{border:0;background:var(--accent-tint);border-radius:var(--ap-r-group)}
-#tutor-selection>div{color:var(--label)}
-#tutor-suggestions .suggestion{border:0;background:var(--fill);border-radius:10px;color:var(--label)}
-#tutor-suggestions .suggestion span{color:var(--label-2)}
-.chat-message{border-radius:16px;background:var(--surface);box-shadow:var(--ap-hair)}
-.chat-message.user{background:var(--accent-tint);box-shadow:none}
-#tutor-form{border-top:0;box-shadow:inset 0 .5px 0 var(--sep)}
-#tutor-question{border-radius:14px}
-#tutor-form select{border-radius:var(--ap-r-pill);background:var(--fill)}
-#tutor-clear{background:transparent;color:var(--accent)}
-#tutor-resize:hover::after,#tutor-resize:focus-visible::after{background:var(--accent-fill)}
-#tutor-open{border-radius:var(--ap-r-pill);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25),0 8px 24px rgb(0 0 0 / .18)}
-dialog{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;border-radius:var(--ap-r-sheet);color:var(--label);box-shadow:var(--ap-glass-edge),var(--ap-shadow-3)}
+:where(.ap) .listen-player{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;border-radius:18px;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
+@media(min-width:1101px){:where(.ap) .listen-player{top:calc(var(--head-h) + 8px)}}
+:where(.ap) .listen-player-top button,:where(.ap) .listen-player-top select{background:var(--fill);border:0;border-radius:var(--ap-r-pill)}
+:where(.ap) .listen-transport button{border-radius:var(--ap-r-pill)}
+:where(.ap) .listen-transport #listen-play{background:var(--accent-fill);color:var(--on-accent);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25)}
+:where(.ap) .listen-transport #listen-replay{background:var(--fill-strong);color:var(--label)}
+:where(.ap) .listen-clip{border:0;background:var(--fill);border-radius:var(--ap-r-pill)}
+:where(.ap) .listen-clip button+button{border-left:.5px solid var(--sep)}
+:where(.ap) #tutor-dialog{background:var(--glass-sheet);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;box-shadow:inset .5px 0 0 var(--ap-rim),-.5px 0 0 var(--sep),var(--ap-shadow-2)}
+:where(.ap) #tutor-dialog .dialogbar{background:transparent;border:0}
+:where(.ap) #tutor-close{border-radius:50%;background:var(--fill)}
+:where(.ap) #tutor-selection{border:0;background:var(--accent-tint);border-radius:var(--ap-r-group)}
+:where(.ap) #tutor-selection>div{color:var(--label)}
+:where(.ap) #tutor-suggestions .suggestion{border:0;background:var(--fill);border-radius:10px;color:var(--label)}
+:where(.ap) #tutor-suggestions .suggestion span{color:var(--label-2)}
+:where(.ap) .chat-message{border-radius:16px;background:var(--surface);box-shadow:var(--ap-hair)}
+:where(.ap) .chat-message.user{background:var(--accent-tint);box-shadow:none}
+:where(.ap) #tutor-form{border-top:0;box-shadow:inset 0 .5px 0 var(--sep)}
+:where(.ap) #tutor-question{border-radius:14px}
+:where(.ap) #tutor-form select{border-radius:var(--ap-r-pill);background:var(--fill)}
+:where(.ap) #tutor-clear{background:transparent;color:var(--accent)}
+:where(.ap) #tutor-resize:hover::after,:where(.ap) #tutor-resize:focus-visible::after{background:var(--accent-fill)}
+:where(.ap) #tutor-open{border-radius:var(--ap-r-pill);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25),0 8px 24px rgb(0 0 0 / .18)}
+:where(.ap) dialog{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border:0;border-radius:var(--ap-r-sheet);color:var(--label);box-shadow:var(--ap-glass-edge),var(--ap-shadow-3)}
 /* Sheets hold long text (translation, profiles): nearly opaque, and they rise without fading so the text is
    never shown at partial contrast. */
-dialog[open]{animation:sheet-rise var(--ap-slow) var(--ap-ease-sheet)}
+:where(.ap) dialog[open]{animation:sheet-rise var(--ap-slow) var(--ap-ease-sheet)}
 @keyframes sheet-rise{from{transform:translateY(14px) scale(.97)}}
-dialog::backdrop{background:var(--scrim);-webkit-backdrop-filter:none;backdrop-filter:none}
-.dialogbar{background:transparent;border-bottom:0;box-shadow:inset 0 -.5px 0 var(--sep)}
-.translation-row div,.paragraph-translation div{border-radius:10px}
-body>.detail-shell.is-open,.detail-shell.is-open{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);box-shadow:var(--ap-glass-edge),var(--ap-shadow-3);border-radius:var(--ap-r-sheet) var(--ap-r-sheet) 0 0}
-.drawer-open #detail-backdrop{background:var(--scrim);-webkit-backdrop-filter:none;backdrop-filter:none}
-#toast{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);color:var(--label);border-radius:var(--ap-r-pill);box-shadow:var(--ap-glass-edge),var(--ap-shadow-2);font-weight:500}
+:where(.ap) dialog::backdrop{background:var(--scrim);-webkit-backdrop-filter:none;backdrop-filter:none}
+:where(.ap) .dialogbar{background:transparent;border-bottom:0;box-shadow:inset 0 -.5px 0 var(--sep)}
+:where(.ap) .translation-row div,:where(.ap) .paragraph-translation div{border-radius:10px}
+:where(.ap) body>.detail-shell.is-open,:where(.ap) .detail-shell.is-open{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);box-shadow:var(--ap-glass-edge),var(--ap-shadow-3);border-radius:var(--ap-r-sheet) var(--ap-r-sheet) 0 0}
+:where(.ap) .drawer-open #detail-backdrop{background:var(--scrim);-webkit-backdrop-filter:none;backdrop-filter:none}
+:where(.ap) #toast{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);color:var(--label);border-radius:var(--ap-r-pill);box-shadow:var(--ap-glass-edge),var(--ap-shadow-2);font-weight:500}
 
 /* ---------- Web clips ---------- */
-.clip-install{border:0;background:var(--group);border-radius:var(--ap-r-group);box-shadow:var(--ap-hair)}
-.bookmarklet{border:0;background:var(--accent-fill);color:var(--on-accent);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25)}
-.clip-incoming{border:0;box-shadow:inset 0 0 0 2px var(--accent-fill),var(--card-shadow)}
-.clip-desk-url{background:var(--fill)}
-#clip-code{border-radius:var(--ap-r-field)}
+:where(.ap) .clip-install{border:0;background:var(--group);border-radius:var(--ap-r-group);box-shadow:var(--ap-hair)}
+:where(.ap) .bookmarklet{border:0;background:var(--accent-fill);color:var(--on-accent);box-shadow:inset 0 1px 0 rgb(255 255 255 / .25)}
+:where(.ap) .clip-incoming{border:0;box-shadow:inset 0 0 0 2px var(--accent-fill),var(--card-shadow)}
+:where(.ap) .clip-desk-url{background:var(--fill)}
+:where(.ap) #clip-code{border-radius:var(--ap-r-field)}
 
 @media print{
-  body.ap{background:white;color:black}
-  .sidebar,.workspace>header,.listen-player{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
-  .reading-grid,#grammar-grid,.paper,.workcard,.exercise-card{box-shadow:none}
+  :where(.ap) body{background:white;color:black}
+  :where(.ap) .sidebar,:where(.ap) .workspace>header,:where(.ap) .listen-player{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+  :where(.ap) .reading-grid,:where(.ap) #grammar-grid,:where(.ap) .paper,:where(.ap) .workcard,:where(.ap) .exercise-card{box-shadow:none}
 }

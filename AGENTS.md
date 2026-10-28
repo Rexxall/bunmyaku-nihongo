@@ -4,7 +4,7 @@
 
 ## 仓库约定
 
-- 运行：`python3 -m bunmyaku`（默认演示包，`python3 serve.py` 等价）；测试：`python3 -m unittest`，浏览器测试 `node test_*.cjs`（需要 Playwright，见 `docs/development.md`）；改样式或页面结构后必须跑 `test_layout.cjs`，改颜色、按钮或弹出层后必须跑 `test_a11y.cjs`，并用 `TEST_APPEARANCE=dark`、`reduced` 各跑一遍。颜色只用 `src/glass.css` 里的令牌，不在 `base.css`／`theme.css`／`app.css` 写死颜色；玻璃只给浮在内容上的东西，内容本身保持实底（见 `docs/development.md`“界面样式”）。
+- 运行：`python3 -m bunmyaku`（默认演示包，`python3 serve.py` 等价）；测试：`python3 -m unittest`，浏览器测试 `node test_*.cjs`（需要 Playwright，见 `docs/development.md`）；改样式或页面结构后必须跑 `test_layout.cjs`，改颜色、按钮或弹出层后必须跑 `test_a11y.cjs`，并用 `TEST_LOOK=glass` 配 `TEST_APPEARANCE=light`、`dark`、`reduced` 各跑一遍。经典外观是默认，不能因玻璃外观改变；`base.css`／`theme.css`／`app.css` 的颜色写成 `var(--令牌, 经典颜色)`，玻璃规则只写在 `src/glass.css` 且挂在 `.ap` 下；玻璃只给浮在内容上的东西，内容本身保持实底（见 `docs/development.md`“界面样式”）。
 - 服务端无第三方依赖；前端不引入构建工具；新功能先改课程包格式说明再改代码。
 - 界面文字一律写进 `src/i18n.js`，中、日、英三种同时写；页面固定文字用 `data-i18n`，脚本里用 `t()`。课程包内容不翻译。改完在 `TEST_LOCALE=ja-JP`、`en-US` 下各跑一遍布局与无障碍测试。
 - 版权教材内容、私人课程包、密钥永远不进仓库：私人包放仓库外，用 `--content` 指向。`.gitignore` 里的 `content/`、`.local/`、`tutor.json` 不要去掉。

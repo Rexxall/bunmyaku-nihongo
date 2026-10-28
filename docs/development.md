@@ -184,13 +184,15 @@ test_*.py / *.cjs   服务端、发布流程、工具、浏览器测试
 
 ## 界面样式
 
-界面按 Apple 当前的 Liquid Glass 做法分两层：内容（课文、词条卡、练习、文稿、设置）是实底卡片；浮在内容上的侧栏、顶栏、答疑栏、听力播放器、菜单、对话框和提示用半透明的“玻璃”。样式按顺序叠加：
+学习台有两种外观，在右上角菜单的“外观”里切换，记在本机浏览器（`bunmyaku:look`）：经典（默认）和玻璃。`page.html` 头部一小段脚本在首次绘制前给 `<html>` 加上 `ap` 类，玻璃外观就靠这个类生效，不会先闪一下经典外观。
+
+玻璃外观按 Apple 当前的 Liquid Glass 做法分两层：内容（课文、词条卡、练习、文稿、设置）是实底卡片；浮在内容上的侧栏、顶栏、答疑栏、听力播放器、菜单、对话框和提示用半透明的“玻璃”。样式按顺序叠加：
 
 | 文件 | 作用 |
 | --- | --- |
-| `base.css`、`theme.css`、`app.css` | 布局与各组件；颜色只用语义令牌（`--label`、`--surface`、`--accent` 等），不写死颜色（单元测试会查） |
-| `apple-kit.css` | 共享的玻璃组件库，与作者的其他工具同一份，全部挂在 `.ap` 类下；页面的 `<body class="ap">` 启用它 |
-| `glass.css` | 本页的浅色、深色令牌（跟随系统，没有单独的外观开关）和各处的玻璃、胶囊按钮、开关、卡片 |
+| `base.css`、`theme.css`、`app.css` | 经典外观的布局与各组件；颜色写成 `var(--label, #293831)` 这样的语义令牌加经典颜色后备。经典外观下令牌都没有定义，取后备色；不得直接写死颜色（单元测试会查，带色阴影除外） |
+| `apple-kit.css` | 共享的玻璃组件库，与作者的其他工具同一份，全部挂在 `.ap` 类下 |
+| `glass.css` | 玻璃外观：浅色、深色令牌（跟随系统）和各处的玻璃、胶囊按钮、开关、卡片。令牌定义在 `.ap` 上，规则都写成 `:where(.ap) 选择器`，不增加优先级（单元测试会查） |
 
 文字多的浮层（菜单、对话框、答疑栏、手机上的词条抽屉）用更不透明的玻璃，对话框接近实底。系统要求“降低透明度”或“增强对比度”时玻璃全部变实底，“减少动态效果”时不播放任何动画；浏览器不支持 `backdrop-filter` 时也退回实底。顶栏的模糊放在它背后的一层上，而不是顶栏本身：嵌套的 `backdrop-filter` 只能模糊父元素里的内容，否则顶栏里的菜单会看不清。
 
@@ -202,14 +204,15 @@ python3 tools/validate_pack.py examples/demo-pack --strict
 python3 -m bunmyaku --port 8766 &      # 浏览器测试默认访问这个端口
 node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_extension.cjs && node test_layout.cjs && node test_a11y.cjs
 for l in ja-JP en-US; do TEST_LOCALE=$l node test_layout.cjs && TEST_LOCALE=$l node test_a11y.cjs; done
-for a in dark reduced; do TEST_APPEARANCE=$a node test_a11y.cjs; done
+TEST_LOOK=glass node test_layout.cjs
+for a in light dark reduced; do TEST_LOOK=glass TEST_APPEARANCE=$a node test_a11y.cjs; done
 ```
 
 界面语言跟随浏览器语言，所以测试用 `TEST_LOCALE` 设定浏览器语言（默认 `zh-CN`）。`test_layout.cjs` 与 `test_a11y.cjs` 要在三种语言下各跑一遍：英文标签更长，最容易撑破布局。
 
 `test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 七个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；每种宽度再看一次“网页剪贴”里待确认和已保存的长剪贴（长标题、长网址）以及展开的安装说明；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 
-`test_a11y.cjs` 用 axe-core 按 WCAG 2.2 A／AA 和通用最佳实践扫描：每课 × 七个面板，宽屏和手机宽度各一遍，另扫词条抽屉、答疑栏、显示答案、右上角菜单、两个对话框，以及网页剪贴的安装说明、待确认与已保存的剪贴、就剪贴提问的答疑栏；再走一遍键盘路径：第一下 Tab 到“跳到学习内容”、面板标签用方向键切换、词条抽屉打开时焦点进入、按 Esc 回到原词、语法“在正文中定位”把焦点移到正文、答疑栏打开时焦点进输入框、关闭后回到“问老师”；收到剪贴时焦点到“收到一段剪贴”，保存后到这段剪贴，丢弃后回到面板标签。`TEST_APPEARANCE=dark` 在深色下全部重扫；`TEST_APPEARANCE=reduced` 同时打开“降低透明度”和“减少动态效果”重扫，并检查侧栏、顶栏、答疑栏不再模糊、侧栏底色不透明、按钮没有过渡动画。Playwright 没有“降低透明度”的选项，这几项系统设置经 Chrome 开发者协议（CDP）模拟，测试先用 `matchMedia` 确认模拟生效。
+`test_a11y.cjs` 用 axe-core 按 WCAG 2.2 A／AA 和通用最佳实践扫描：每课 × 七个面板，宽屏和手机宽度各一遍，另扫词条抽屉、答疑栏、显示答案、右上角菜单、两个对话框，以及网页剪贴的安装说明、待确认与已保存的剪贴、就剪贴提问的答疑栏；再走一遍键盘路径：第一下 Tab 到“跳到学习内容”、面板标签用方向键切换、词条抽屉打开时焦点进入、按 Esc 回到原词、语法“在正文中定位”把焦点移到正文、答疑栏打开时焦点进输入框、关闭后回到“问老师”；收到剪贴时焦点到“收到一段剪贴”，保存后到这段剪贴，丢弃后回到面板标签。`TEST_LOOK` 选外观（默认 `classic`，检查没有模糊；`glass`，检查侧栏、顶栏、答疑栏有模糊），`test_layout.cjs` 也认它。`TEST_APPEARANCE=dark` 在深色下全部重扫；`TEST_APPEARANCE=reduced` 同时打开“降低透明度”和“减少动态效果”重扫，并检查侧栏、顶栏、答疑栏不再模糊、侧栏底色不透明、按钮没有过渡动画。Playwright 没有“降低透明度”的选项，这几项系统设置经 Chrome 开发者协议（CDP）模拟，测试先用 `matchMedia` 确认模拟生效。
 
 `test_extension.cjs` 用 Playwright 自带的 Chromium 加载 `extension/` 的副本（Chrome 正式版已不能从命令行加载扩展）：核选项页的默认地址、拒收非 http 地址；在带注音的网页上剪贴，学习台收到去掉注音的文字、标题和网址并能保存；没选中时弹提示；浏览器自己的页面改用右键菜单文字，没有文字时按钮显示“!”。自动化点不到工具栏，所以副本额外给了所有网站的访问权限，再调用按钮背后同一个函数；正式扩展没有这项权限，单元测试核对清单的权限、版本号与三语文案。
 
@@ -225,6 +228,6 @@ for a in dark reduced; do TEST_APPEARANCE=$a node test_a11y.cjs; done
   "http://127.0.0.1:8765/#lesson=01&panel=read&word=v8"
 ```
 
-截图一律用浅色外观、中文界面。`study-mobile.png` 是三张 390×844、两倍像素的手机截图（课文、词条卡、听力）放进手机外框并排拼成；`social-preview.png`（1280×640）是仓库的分享预览图，在 GitHub 仓库设置的 Social preview 里上传。扩展图标 `extension/icons/` 由学习台的“文”字方标按 16／32／48／128 像素渲染。
+截图一律用经典外观、中文界面；`study-glass.png` 是玻璃外观的浅色宽屏课文页。`study-mobile.png` 是三张 390×844、两倍像素的手机截图（课文、词条卡、听力）放进手机外框并排拼成；`social-preview.png`（1280×640）是仓库的分享预览图，在 GitHub 仓库设置的 Social preview 里上传。扩展图标 `extension/icons/` 由学习台的“文”字方标按 16／32／48／128 像素渲染。
 
 页面支持 `#lesson=`、`panel=`（read／words／grammar／exercises／listening／notes／clips）、`word=`、`answers=1`、`tutor=选中文字` 深链接。截图不得出现版权教材页面、个人笔记或密钥。

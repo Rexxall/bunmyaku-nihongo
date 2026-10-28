@@ -85,6 +85,21 @@ const locale = process.env.TEST_LOCALE || 'zh-CN';
     assert.equal(await page.evaluate(() => document.documentElement.lang), 'en', 'lang= in the link wins');
     await page.evaluate(() => { localStorage.removeItem('bunmyaku:ui-lang'); });
 
+    // Look: classic by default; glass is picked in the header menu, applies at once and is kept on reload.
+    await page.evaluate(() => { localStorage.removeItem('bunmyaku:look'); }); await page.reload();
+    const lookState = () => page.evaluate(() => [document.documentElement.classList.contains('ap'), getComputedStyle(document.querySelector('.sidebar')).backdropFilter, document.getElementById('ui-look').value]);
+    assert.deepEqual(await lookState(), [false, 'none', 'classic'], 'classic by default');
+    await page.locator('.header-more > summary').click();
+    await page.selectOption('#ui-look', 'glass');
+    assert.equal((await lookState())[0], true, 'glass applies at once');
+    await page.reload();
+    const [glassOn, blur, value] = await lookState();
+    assert.ok(glassOn && blur.startsWith('blur') && value === 'glass', 'glass kept on reload');
+    await page.locator('.header-more > summary').click();
+    await page.selectOption('#ui-look', 'classic'); await page.reload();
+    assert.deepEqual(await lookState(), [false, 'none', 'classic'], 'back to classic');
+    checks++;
+
     console.log({checks, errors});
     assert.deepEqual(errors, []);
   } finally {

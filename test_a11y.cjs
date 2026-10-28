@@ -1,9 +1,10 @@
 // Accessibility checks: axe-core (WCAG 2.2 A/AA and best practices) on every lesson × panel at a wide and a
 // phone width, plus the word drawer, the tutor, revealed answers, the header menu and both dialogs; then the
 // keyboard paths: skip link, tab arrows, word drawer focus return, grammar locate, tutor focus in and out.
-// TEST_APPEARANCE runs it all under another system setting: dark, or reduced (less transparency and less
-// motion), where the glass surfaces must turn solid and nothing may animate.
-// Env: TEST_LOCALE, TEST_APPEARANCE (light, dark, reduced), STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, AXE_PATH.
+// TEST_LOOK picks the look (classic, the default, or glass). TEST_APPEARANCE runs it all under another system
+// setting: dark, or reduced (less transparency and less motion), where the glass surfaces must turn solid and
+// nothing may animate.
+// Env: TEST_LOCALE, TEST_LOOK (classic, glass), TEST_APPEARANCE (light, dark, reduced), STUDY_URL (default http://127.0.0.1:8766/), PLAYWRIGHT_MODULE, PLAYWRIGHT_CHANNEL, AXE_PATH.
 const fs = require('fs');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const url = process.env.STUDY_URL || 'http://127.0.0.1:8766/';
@@ -14,6 +15,8 @@ const axeSource = fs.readFileSync(process.env.AXE_PATH || require.resolve('axe-c
 const appearance = process.env.TEST_APPEARANCE || 'light';
 const media = {light: {}, dark: {'prefers-color-scheme': 'dark'}, reduced: {'prefers-reduced-transparency': 'reduce', 'prefers-reduced-motion': 'reduce'}}[appearance];
 if (!media) throw new Error(`TEST_APPEARANCE must be light, dark or reduced, not ${appearance}`);
+const look = process.env.TEST_LOOK || 'classic';
+if (!['classic', 'glass'].includes(look)) throw new Error(`TEST_LOOK must be classic or glass, not ${look}`);
 const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes', 'clips'];
 const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の本屋が今月で閉店するらしい。', title: '町のニュース', url: 'https://example.com/news/1'}));
 
@@ -22,6 +25,7 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
   try {
     const page = await browser.newPage({locale});
     page.setDefaultTimeout(10000);
+    await page.addInitScript(l => localStorage.setItem('bunmyaku:look', JSON.stringify(l)), look);
     // Playwright has no option for prefers-reduced-transparency, so all the media features go through CDP.
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Emulation.setEmulatedMedia', {features: Object.entries(media).map(([name, value]) => ({name, value}))});
@@ -52,7 +56,10 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
     await page.setViewportSize({width: 1440, height: 900});
     const glass = await page.evaluate(() => ['.sidebar', '#tutor-dialog'].map(sel => getComputedStyle(document.querySelector(sel)).backdropFilter)
       .concat(getComputedStyle(document.querySelector('.workspace>header'), '::before').backdropFilter));
-    if (appearance === 'reduced') {
+    if (look === 'classic') {
+      if (await page.evaluate(() => document.documentElement.classList.contains('ap'))) failures.push('classic look: glass class is set');
+      if (glass.some(f => f !== 'none')) failures.push(`classic look: glass blur present (${glass.join(', ')})`);
+    } else if (appearance === 'reduced') {
       if (glass.some(f => f !== 'none')) failures.push(`reduced transparency: glass still blurred (${glass.join(', ')})`);
       const alpha = await page.evaluate(() => { const c = document.createElement('canvas').getContext('2d'); c.fillStyle = getComputedStyle(document.querySelector('.sidebar')).backgroundColor; c.fillRect(0, 0, 1, 1); return c.getImageData(0, 0, 1, 1).data[3] / 255; });
       if (alpha < 0.95) failures.push(`reduced transparency: sidebar background is only ${alpha.toFixed(2)} opaque`);
@@ -133,7 +140,7 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
       process.exitCode = 1;
       return;
     }
-    console.log(`PASS (${locale}, ${appearance}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu, dialogs and web clips) and keyboard paths.`);
+    console.log(`PASS (${locale}, ${look}, ${appearance}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu, dialogs and web clips) and keyboard paths.`);
   } finally {
     await browser.close();
   }

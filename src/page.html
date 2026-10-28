@@ -1,5 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bunmyaku · 文脈</title>
+<!-- The glass look is optional (more-menu); set it before the first paint so the page does not flash the classic theme. -->
+<script>try{if(JSON.parse(localStorage.getItem('bunmyaku:look'))==='glass')document.documentElement.classList.add('ap')}catch{}</script>
 <style>@@SOURCE:base.css@@</style>
 <!-- Bundled Marked (MIT). Copyright (c) 2018+, MarkedJS; Copyright (c) 2011-2018, Christopher Jeffrey.
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -13,7 +15,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <style id="app-style">@@SOURCE:app.css@@</style>
 <style id="glass-kit">@@SOURCE:apple-kit.css@@</style>
 <style id="glass-style">@@SOURCE:glass.css@@</style>
-</head><body class="ap">
+</head><body>
 <a class="skip-link" href="#main" data-i18n="skip">跳到学习内容</a>
 <aside class="sidebar">
 <div class="brand"><span class="brand-mark">文</span><div><strong>Bunmyaku</strong><small>LEARN JAPANESE IN CONTEXT</small></div></div>
@@ -43,6 +45,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <button id="export-anki" data-i18n="more.anki">生词导出给 Anki</button>
 <button id="print" data-i18n="more.print">打印当前页</button>
 <label class="ui-language"><span data-i18n="more.language">界面语言</span> <select id="ui-lang"></select></label>
+<label class="ui-language"><span data-i18n="more.look">外观</span> <select id="ui-look"><option value="classic" data-i18n="look.classic">经典</option><option value="glass" data-i18n="look.glass">玻璃</option></select></label>
 <p class="storage-note" data-i18n="more.storage">笔记按学习档案保存在当前浏览器；需要备份时导出。课程内容来自本机课程包。</p>
 <span id="save-status" role="status"></span>
 </div></details>

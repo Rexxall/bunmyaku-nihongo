@@ -1,0 +1,35 @@
+{
+  "name": {
+    "message": "Bunmyaku に切り抜く"
+  },
+  "description": {
+    "message": "選んだ日本語を Bunmyaku 学習机のウェブ切り抜きへ送ります。"
+  },
+  "action": {
+    "message": "選んだ文字を Bunmyaku に切り抜く"
+  },
+  "menu": {
+    "message": "Bunmyaku に切り抜く"
+  },
+  "selectFirst": {
+    "message": "先に切り抜く文字を選んでください。"
+  },
+  "optionsTitle": {
+    "message": "Bunmyaku 切り抜きの設定"
+  },
+  "deskLabel": {
+    "message": "学習机のアドレス"
+  },
+  "deskHelp": {
+    "message": "学習机を開くアドレスです（ウェブ切り抜きパネルに表示されます）。既定値はこのパソコンで python3 -m bunmyaku を動かす場合のものです。"
+  },
+  "save": {
+    "message": "保存"
+  },
+  "saved": {
+    "message": "保存しました。"
+  },
+  "invalid": {
+    "message": "http:// か https:// で始まるアドレスを入力してください。"
+  }
+}

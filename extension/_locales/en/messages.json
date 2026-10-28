@@ -1,0 +1,35 @@
+{
+  "name": {
+    "message": "Clip to Bunmyaku"
+  },
+  "description": {
+    "message": "Send selected Japanese from any page to the web clips panel of your Bunmyaku study desk."
+  },
+  "action": {
+    "message": "Clip the selection to Bunmyaku"
+  },
+  "menu": {
+    "message": "Clip to Bunmyaku"
+  },
+  "selectFirst": {
+    "message": "Select the text to clip first."
+  },
+  "optionsTitle": {
+    "message": "Bunmyaku clipper settings"
+  },
+  "deskLabel": {
+    "message": "Study desk address"
+  },
+  "deskHelp": {
+    "message": "The address you open the study desk at, as shown in its web clips panel. The default fits python3 -m bunmyaku on this computer."
+  },
+  "save": {
+    "message": "Save"
+  },
+  "saved": {
+    "message": "Saved."
+  },
+  "invalid": {
+    "message": "Enter an http:// or https:// address."
+  }
+}

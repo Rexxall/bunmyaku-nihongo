@@ -152,6 +152,8 @@ python3 tools/import_text.py --text 课文.txt --vocab 牌组.txt --map word=1,r
 python3 tools/import_text.py --text 2026-10-28_町のニュース_网页剪贴.txt --out ~/clip-pack --id clip-pack --license "私人材料，不分发"
 ```
 
+**浏览器扩展。** 仓库的 `extension/` 是同一功能的 Chrome／Edge 扩展（Manifest V3），不经商店，按“加载已解压的扩展程序”装：扩展管理页打开“开发者模式”，选 `extension` 文件夹。在扩展的选项里填学习台地址（默认 `http://127.0.0.1:8765/`，“网页剪贴”面板的安装说明里写着当前地址）。选中文字后点工具栏按钮、按 Alt+Shift+K（快捷键可在扩展管理页改），或右键“剪到 Bunmyaku”，扩展像书签小工具一样用 `#clip=` 在新标签页打开学习台，同样要点“保存”才存。权限只有 `activeTab`、`scripting`、`contextMenus`、`storage`：只在你点按钮或菜单的那一刻读当前页，存的只有学习台地址，没有任何网站的常驻访问权限。浏览器自己的页面等不允许扩展运行脚本的地方，改用右键菜单带来的纯文字（无法去掉注音）；什么都没选时页面弹提示，脚本不能运行的页面在按钮上显示“!”。扩展界面有中、日、英三语，跟随浏览器语言。自动测试在 Playwright 自带的 Chromium 上跑；Firefox 的 Manifest V3 不支持 `service_worker` 后台，这份清单没有为 Firefox、Safari 适配。
+
 手机浏览器一般不能把链接拖进书签：先随便收藏一个网页，再把书签地址换成面板里的代码。书签小工具的地址写死了生成它时学习台的网址；换了端口或局域网地址，要重新装一次。网站的内容安全策略可能拦下书签小工具，这时只能手动复制文字。
 
 ## 在线演示（静态页）
@@ -172,6 +174,7 @@ serve.py            本地 HTTP 服务：在内存里拼页面、按允许列表
 packlib.py          课程包加载：解析 pack.json、内联各课、生成媒体允许列表
 manage.py           版本快照、校验、发布、回退与监督运行
 configure_ai.py     答疑接口配置（端点、模型、密钥）
+extension/          网页剪贴浏览器扩展（Chrome／Edge，Manifest V3）
 src/                page.html 骨架、app.js、三份样式、marked.js（MIT）
 tools/              validate_pack.py 校验器、import_text.py 导入器、export_static.py 静态导出、占位音频脚本
 examples/demo-pack  原创演示课程包（CC0）
@@ -185,7 +188,7 @@ test_*.py / *.cjs   服务端、发布流程、工具、浏览器测试
 python3 -m unittest -v                 # 服务端、发布流程、工具、启动入口
 python3 tools/validate_pack.py examples/demo-pack --strict
 python3 -m bunmyaku --port 8766 &      # 浏览器测试默认访问这个端口
-node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs && node test_a11y.cjs
+node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_extension.cjs && node test_layout.cjs && node test_a11y.cjs
 for l in ja-JP en-US; do TEST_LOCALE=$l node test_layout.cjs && TEST_LOCALE=$l node test_a11y.cjs; done
 ```
 
@@ -194,6 +197,8 @@ for l in ja-JP en-US; do TEST_LOCALE=$l node test_layout.cjs && TEST_LOCALE=$l n
 `test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 七个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；每种宽度再看一次“网页剪贴”里待确认和已保存的长剪贴（长标题、长网址）以及展开的安装说明；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 
 `test_a11y.cjs` 用 axe-core 按 WCAG 2.2 A／AA 和通用最佳实践扫描：每课 × 七个面板，宽屏和手机宽度各一遍，另扫词条抽屉、答疑栏、显示答案、右上角菜单、两个对话框，以及网页剪贴的安装说明、待确认与已保存的剪贴、就剪贴提问的答疑栏；再走一遍键盘路径：第一下 Tab 到“跳到学习内容”、面板标签用方向键切换、词条抽屉打开时焦点进入、按 Esc 回到原词、语法“在正文中定位”把焦点移到正文、答疑栏打开时焦点进输入框、关闭后回到“问老师”；收到剪贴时焦点到“收到一段剪贴”，保存后到这段剪贴，丢弃后回到面板标签。
+
+`test_extension.cjs` 用 Playwright 自带的 Chromium 加载 `extension/` 的副本（Chrome 正式版已不能从命令行加载扩展）：核选项页的默认地址、拒收非 http 地址；在带注音的网页上剪贴，学习台收到去掉注音的文字、标题和网址并能保存；没选中时弹提示；浏览器自己的页面改用右键菜单文字，没有文字时按钮显示“!”。自动化点不到工具栏，所以副本额外给了所有网站的访问权限，再调用按钮背后同一个函数；正式扩展没有这项权限，单元测试核对清单的权限、版本号与三语文案。
 
 浏览器测试需要 `npm install --no-save playwright@1.64.1 axe-core@4.10.3 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），这个工作流不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（GitHub 的 macOS 与最新 Ubuntu 机器没有 3.9 安装包，3.9 在 Windows 和 Ubuntu 24.04 上跑），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
 

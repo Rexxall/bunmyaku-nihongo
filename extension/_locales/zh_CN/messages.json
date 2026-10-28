@@ -1,0 +1,35 @@
+{
+  "name": {
+    "message": "剪到 Bunmyaku"
+  },
+  "description": {
+    "message": "把网页上选中的日文送进 Bunmyaku 学习台的“网页剪贴”。"
+  },
+  "action": {
+    "message": "把选中的文字剪到 Bunmyaku"
+  },
+  "menu": {
+    "message": "剪到 Bunmyaku"
+  },
+  "selectFirst": {
+    "message": "先在网页上选中要剪贴的文字。"
+  },
+  "optionsTitle": {
+    "message": "Bunmyaku 剪贴设置"
+  },
+  "deskLabel": {
+    "message": "学习台地址"
+  },
+  "deskHelp": {
+    "message": "平时打开学习台用的网址（“网页剪贴”面板里写着）。默认值对应在本机运行 python3 -m bunmyaku。"
+  },
+  "save": {
+    "message": "保存"
+  },
+  "saved": {
+    "message": "已保存。"
+  },
+  "invalid": {
+    "message": "请填写以 http:// 或 https:// 开头的网址。"
+  }
+}

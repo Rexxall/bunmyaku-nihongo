@@ -75,3 +75,4 @@ body:not(.hide-ruby) .detail h3:has(ruby)+.kana{display:none}
 .clip-card .toolbar{gap:8px;margin:8px 0 0}
 .clip-incoming{border:2px solid var(--blue);margin-bottom:16px}
 .clip-incoming h3:focus{outline:none}
+.clip-desk-url{overflow-wrap:anywhere;font-size:13px;background:#eef3ec;border-radius:6px;padding:1px 6px}

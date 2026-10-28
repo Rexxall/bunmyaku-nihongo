@@ -104,6 +104,6 @@ my-pack/
 ## 5 已知限制与待定项
 
 - 界面三语（中、日、英）已在第四批完成，见 CHANGELOG。
-- 网页剪贴先做成书签小工具（1.2.0）；同一功能的浏览器扩展（Manifest V3）未做。
+- 网页剪贴有书签小工具和 Chrome／Edge 扩展（Manifest V3，1.2.0）；扩展未上架商店，Firefox、Safari 未测。
 - 演示包音频为本机生成的占位音（CC0），`tools/make_demo_audio.sh` 可在 macOS 用系统语音重生成，但系统语音输出的再分发授权不明，仓库内不放语音合成文件。
 - 本机没有 Node／npm／Playwright，浏览器测试以 CI 为准；本地验证用桌面内置浏览器手工走一遍。

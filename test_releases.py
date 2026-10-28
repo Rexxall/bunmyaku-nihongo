@@ -60,3 +60,30 @@ class Releases(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class Extension(unittest.TestCase):
+    """The browser extension ships with the release: same version, every message in every language, no missing file."""
+
+    def test_manifest_matches_release_and_locales(self):
+        import re
+        import bunmyaku
+        root = Path(__file__).resolve().parent / 'extension'
+        manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+        self.assertEqual(manifest['manifest_version'], 3)
+        self.assertEqual(manifest['version'], bunmyaku.__version__)
+        self.assertNotIn('host_permissions', manifest)
+        self.assertEqual(sorted(manifest['permissions']), ['activeTab', 'contextMenus', 'scripting', 'storage'])
+        used = set(re.findall(r'__MSG_(\w+)__', json.dumps(manifest)))
+        for source in ('background.js', 'options.js', 'options.html'):
+            text = (root / source).read_text(encoding='utf-8')
+            used |= set(re.findall(r"(?:getMessage|msg)\('(\w+)'\)", text)) | set(re.findall(r'data-msg="(\w+)"', text))
+        locales = {d.name: set(json.loads((d / 'messages.json').read_text(encoding='utf-8'))) for d in (root / '_locales').iterdir()}
+        self.assertEqual(set(locales), {'en', 'ja', 'zh_CN'})
+        self.assertIn(manifest['default_locale'], locales)
+        for name, keys in locales.items():
+            self.assertEqual(keys, locales['en'], name)
+            self.assertLessEqual(used, keys, name)
+        files = [manifest['background']['service_worker'], manifest['options_ui']['page'], *manifest['icons'].values(), *manifest['action']['default_icon'].values()]
+        for name in files:
+            self.assertTrue((root / name).is_file(), name)

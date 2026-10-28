@@ -647,6 +647,7 @@ function clipLessonText(c) { return `# ${c.title || clipSource(c)}\nSource: ${[c
 $('clip-bookmarklet').href = bookmarklet();
 $('clip-bookmarklet').onclick = e => { e.preventDefault(); notify(t('clip.dragOnly')); };
 $('clip-code').value = bookmarklet();
+$('clip-desk-url').textContent = location.origin + location.pathname;
 $('clip-copy').onclick = async () => {
   if (await copyText($('clip-code').value)) notify(t('clip.codeCopied'));
   else { $('clip-code').focus(); $('clip-code').select(); notify(t('clip.codeManual')); }

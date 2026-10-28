@@ -201,6 +201,7 @@ const STRINGS = {
   'clip.codeCopied': ['已复制书签代码。', 'コードをコピーしました。', 'Code copied.'],
   'clip.codeManual': ['浏览器不让自动复制，代码已选中，请手动复制。', '自動でコピーできないため、コードを選択しました。手動でコピーしてください。', 'The browser blocked copying; the code is selected, copy it by hand.'],
   'clip.dragOnly': ['把它拖到书签栏，在别的网页上点它。', 'ブックマークバーへドラッグして、ほかのページで押してください。', 'Drag it to the bookmarks bar and click it on another page.'],
+  'clip.extension': ['也可以用浏览器扩展（Chrome、Edge）：在扩展管理页打开“开发者模式”，点“加载已解压的扩展程序”，选仓库里的 extension 文件夹；再在扩展的选项里把学习台地址填成：', 'ブラウザ拡張（Chrome・Edge）も使えます。拡張機能の管理ページで「デベロッパー モード」をオンにし、「パッケージ化されていない拡張機能を読み込む」でリポジトリの extension フォルダを選びます。拡張のオプションで学習机のアドレスを次のように設定してください：', 'There is also a browser extension (Chrome, Edge): on the extensions page turn on Developer mode, choose “Load unpacked” and pick the extension folder of the repository, then set the study desk address in its options to:'],
   'clip.selectFirst': ['先在网页上选中要剪贴的文字。', '先に切り抜く文字を選んでください。', 'Select the text to clip first.'],
   'clip.incoming': ['收到一段剪贴', '切り抜きが届きました', 'A clip arrived'],
   'clip.incomingHelp': ['确认后才会保存。不是你刚剪的就丢弃。', '保存するまで記録されません。自分で切り抜いたものでなければ破棄してください。', 'Nothing is kept until you save it. Discard it if you did not just clip it.'],

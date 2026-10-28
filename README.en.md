@@ -25,7 +25,7 @@ Bunmyaku is a local web app. It ships no textbook. You (or your AI agent) arrang
 | Exercises | Fill-in answers shown in place, correct choices marked, rewriting and open questions; hints, answers and explanations toggle separately |
 | Listening | Play, change speed, ±5 s, replay, A/B loop and saved segments; transcript lines and translations hide independently |
 | Tutor | Select any word or sentence and ask; the server sends the model only the proofread text of the current lesson. No API key? Copy the assembled prompt instead |
-| Web clips | Select Japanese on any page and send it to the study desk with a bookmarklet; once saved under the current profile, ask the tutor about it or export it as plain text and turn it into a lesson with the importer |
+| Web clips | Select Japanese on any page and send it to the study desk with a bookmarklet or the browser extension (Chrome, Edge); once saved under the current profile, ask the tutor about it or export it as plain text and turn it into a lesson with the importer |
 | Records | Notes, answers and listening progress are saved in the browser per learner profile; one profile by default, more if you study with someone; export to Markdown, and vocabulary to Anki with the sentence it came from and your own explanation |
 | Interface | Chinese, Japanese or English, following the browser language; switch in the top-right menu. Course content itself is not translated |
 

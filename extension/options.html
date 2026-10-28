@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Bunmyaku</title>
+<style>
+body{font:14px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;color:#293831;margin:16px;min-width:320px}
+label{display:block;font-weight:600;margin-bottom:6px}
+input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #a3b2cb;border-radius:8px;font:inherit}
+p{margin:6px 0;color:#5c655e}
+button{margin-top:10px;padding:7px 16px;border-radius:8px;border:1px solid #356451;background:#356451;color:#fff;font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #e27d00;outline-offset:2px}
+#status{min-height:1.6em;color:#356451}
+#status.error{color:#a3301f}
+</style></head><body>
+<form id="form">
+<label for="desk" data-msg="deskLabel"></label>
+<input id="desk" type="url" required spellcheck="false" autocomplete="off">
+<p data-msg="deskHelp"></p>
+<button type="submit" data-msg="save"></button>
+<p id="status" role="status"></p>
+</form>
+<script src="options.js"></script>
+</body></html>

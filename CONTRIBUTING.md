@@ -39,7 +39,7 @@ python3 -m bunmyaku --open
 python3 -m unittest -v
 python3 tools/validate_pack.py examples/demo-pack --strict
 python3 -m bunmyaku --port 8766 &
-node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_layout.cjs && node test_a11y.cjs
+node test_browser.cjs && node test_learning.cjs && node test_resume.cjs && node test_extension.cjs && node test_layout.cjs && node test_a11y.cjs
 ```
 
 浏览器测试需要 Playwright 和 axe-core，安装方法见 [部署与开发](docs/development.md#测试)。GitHub Actions 会在 Linux、Windows、macOS 和 Python 3.9／最新版上再跑一遍。

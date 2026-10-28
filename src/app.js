@@ -1,7 +1,7 @@
 'use strict';
 /* Bunmyaku study page. Everything on this page is driven by the course pack injected as #pack-data.
    Browser storage holds only learner records (notes, positions, audio progress), keyed by pack id,
-   lesson id and learner profile. No network calls except /api/* on the same origin. */
+   lesson id and learner profile, plus web clips per profile. No network calls except /api/* on the same origin. */
 
 const PACK = JSON.parse(document.getElementById('pack-data').textContent);
 const PACK_ID = String(PACK.id || 'pack');
@@ -13,6 +13,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '
 // Language of the pack's explanations (translations, meanings), so screen readers read them right whatever the interface language.
 const TL = ({zh: 'zh-CN'})[PACK.translation_language] || PACK.translation_language || 'zh-CN';
 applyStaticText();
+const PANELS = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes', 'clips'];
 const KANJI = /[一-龯々〆〇]/u;
 const KANJI_RUN = /[一-龯々〆〇]+/gu;
 
@@ -142,7 +143,7 @@ function restoreStudyPosition() {
   try {
     if (LESSONS.some(l => l.id === p.course)) switchCourse(p.course);
     if (typeof p.listening === 'string' && (L.listening || []).some(x => x.id === p.listening)) listeningId = p.listening;
-    if (['read', 'words', 'grammar', 'exercises', 'listening', 'notes'].includes(p.panel)) showTab(p.panel);
+    if (PANELS.includes(p.panel)) showTab(p.panel);
     const y = Number.isFinite(p.y) ? Math.max(0, p.y) : 0;
     requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, y)));
   } finally { restoringStudy = false; }
@@ -560,13 +561,16 @@ function renderNotes() {
   const entries = noteEntries();
   $('notes').innerHTML = `<div class="section-bar"><h2>${t('notes.title')}</h2><div class="bar-controls"><span class="minor">${esc(who(learner))} · ${esc(L.title)}</span></div></div>${entries.length ? `<div class="note-grid">${entries.map(n => `<article class="note-card"><h3 lang="ja">${esc(n.label)}</h3>${n.text ? `<p lang="ja">${esc(n.text)}</p>` : ''}${n.done ? `<p class="minor">${t('notes.canExplain')}</p>` : ''}</article>`).join('')}</div>` : `<p class="empty-panel">${t('notes.empty')}</p>`}`;
 }
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], {type: type + ';charset=utf-8'})), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 $('export').onclick = () => {
   const date = new Date().toLocaleDateString('sv-SE');
   let md = `---\nlearner: ${who(learner)}\npack: ${PACK.title || PACK_ID}\nlesson: ${L.title}\nexported: ${date}\n---\n\n# ${t('export.heading', {name: who(learner), lesson: L.title})}\n\n${t('export.intro')}\n\n`;
   for (const e of L.vocabulary || []) { const r = record('v:' + e.id); md += `## ${e.word}（${e.reading || ''}）\n\n${(r.text || t('export.empty')).replace(/\r\n/g, '\n')}\n\n- [${r.done ? 'x' : ' '}] ${t('export.canExplain')}\n\n`; }
   for (const q of [...(L.exercises || []).flatMap(g => g.items), ...(L.listening || []).flatMap(x => x.questions || [])]) { const r = record('x:' + q.id); if (r.text) md += `## ${q.question}\n\n${r.text.replace(/\r\n/g, '\n')}\n\n`; }
-  const url = URL.createObjectURL(new Blob([md], {type: 'text/markdown;charset=utf-8'})), a = document.createElement('a');
-  a.href = url; a.download = `${date}_${who(learner)}_${L.title}_${t('export.file')}.md`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  download(`${date}_${who(learner)}_${L.title}_${t('export.file')}.md`, md, 'text/markdown');
   notify(t('export.done'));
 };
 // Anki "Notes in Plain Text" import file (Anki 2.1.54+ reads the # headers): one note per word of this lesson,
@@ -594,10 +598,99 @@ function ankiExport() {
 $('export-anki').onclick = () => {
   if (!vocab().length) { notify(t('anki.none')); return; }
   const date = new Date().toLocaleDateString('sv-SE');
-  const url = URL.createObjectURL(new Blob([ankiExport()], {type: 'text/plain;charset=utf-8'})), a = document.createElement('a');
-  a.href = url; a.download = `${date}_${PACK_ID}_${L.id}_anki.txt`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  download(`${date}_${PACK_ID}_${L.id}_anki.txt`, ankiExport(), 'text/plain');
   notify(t('anki.done', {n: vocab().length}));
 };
+// ------------------------------------------------------------------ web clips
+
+// The bookmarklet opens this page with #clip=<JSON>; nothing is kept until the learner presses Save, so a
+// page that opens such a link by itself cannot fill the list. Clips belong to a profile, not to a pack or lesson.
+const CLIP_KEY = 'bunmyaku:clips', CLIP_MAX = 300;
+let pendingClip = null, activeClipId = '';
+function allClips() { const v = store.get(CLIP_KEY, {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+// Stored clips are read back through the same checks as arriving ones, so an edited entry cannot become a javascript: link.
+function clips() {
+  const list = allClips()[learner];
+  return Array.isArray(list) ? list.filter(c => c && typeof c.id === 'string' && typeof c.text === 'string').map(c => ({...c, url: httpURL(String(c.url || '')), title: String(c.title || '')})) : [];
+}
+function saveClips(list) { const all = allClips(); all[learner] = list; storageOK = store.set(CLIP_KEY, all); return storageOK; }
+function httpURL(value) {
+  try { const u = new URL(value); return ['http:', 'https:'].includes(u.protocol) && u.href.length <= 2000 ? u.href : ''; } catch { return ''; }
+}
+function readClip(raw) {
+  try {
+    const d = JSON.parse(raw), text = typeof d.text === 'string' ? d.text.replace(/\r\n?/g, '\n').trim().slice(0, 4000) : '';
+    return text ? {text, url: httpURL(String(d.url || '')), title: typeof d.title === 'string' ? d.title.replace(/\s+/g, ' ').trim().slice(0, 200) : ''} : null;
+  } catch { return null; }
+}
+const clipSource = c => c.title || (c.url ? new URL(c.url).host : t('clip.noSource'));
+const clipSourceHTML = c => c.url ? `<a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${esc(clipSource(c))}</a>` : esc(clipSource(c));
+// Runs on the other page: takes the selection without furigana (<rt>) and opens this page in the tab named 'bunmyaku'.
+function bookmarklet() {
+  const code = `(function(){var g=getSelection(),s=String(g);if(g.rangeCount){var f=document.createElement('div');f.append(g.getRangeAt(0).cloneContents());if(f.querySelector('rt')){f.querySelectorAll('rt,rp').forEach(function(x){x.remove()});s=f.textContent}}s=s.trim();if(!s){alert(${JSON.stringify(t('clip.selectFirst'))});return}window.open(${JSON.stringify(location.origin + location.pathname)}+'#clip='+encodeURIComponent(JSON.stringify({text:s.slice(0,4000),url:location.href,title:document.title.slice(0,200)})),'bunmyaku')})()`;
+  return 'javascript:' + encodeURIComponent(code);
+}
+function clipCard(c) {
+  const date = new Date(c.at).toLocaleDateString(UI_HTML_LANG[UI_LANG]);
+  return `<article class="note-card clip-card" data-clip="${esc(c.id)}"><blockquote lang="ja">${esc(c.text)}</blockquote><p class="minor clip-source">${clipSourceHTML(c)} · ${esc(date)}</p><div class="toolbar"><button data-clip-ask="${esc(c.id)}">${t('clip.ask')}</button><button data-clip-txt="${esc(c.id)}">${t('clip.exportText')}</button><button data-clip-delete="${esc(c.id)}">${t('clip.delete')}</button></div></article>`;
+}
+function renderClips() {
+  const list = clips(), c = pendingClip;
+  $('clip-count').textContent = t('clip.count', {n: list.length, name: who(learner)});
+  $('clip-export-all').disabled = !list.length;
+  $('clip-incoming').innerHTML = c ? `<article class="note-card clip-card clip-incoming" aria-labelledby="clip-incoming-title"><h3 id="clip-incoming-title" tabindex="-1">${t('clip.incoming')}</h3><p class="minor">${t('clip.incomingHelp')}</p><blockquote lang="ja">${esc(c.text)}</blockquote><p class="minor clip-source">${clipSourceHTML(c)}</p><div class="toolbar"><button id="clip-save" class="primary">${t('clip.save')}</button><button id="clip-discard">${t('clip.discard')}</button></div></article>` : '';
+  $('clip-list').innerHTML = list.length ? `<div class="note-grid">${list.map(clipCard).join('')}</div>` : c ? '' : `<p class="empty-panel">${t('clip.empty')}</p>`;
+}
+function clipFileName(c, ext) { return `${new Date().toLocaleDateString('sv-SE')}_${clipSource(c).replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 60)}_${t('clip.file')}.${ext}`; }
+// Plain text for tools/import_text.py: a "# " title line, a "Source:" line, then the clip's paragraphs.
+function clipLessonText(c) { return `# ${c.title || clipSource(c)}\nSource: ${[c.title, c.url].filter(Boolean).join(' · ') || t('clip.noSource')}\n\n${c.text.replace(/\n{3,}/g, '\n\n')}\n`; }
+$('clip-bookmarklet').href = bookmarklet();
+$('clip-bookmarklet').onclick = e => { e.preventDefault(); notify(t('clip.dragOnly')); };
+$('clip-code').value = bookmarklet();
+$('clip-copy').onclick = async () => {
+  if (await copyText($('clip-code').value)) notify(t('clip.codeCopied'));
+  else { $('clip-code').focus(); $('clip-code').select(); notify(t('clip.codeManual')); }
+};
+$('clip-export-all').onclick = () => {
+  const list = clips(); if (!list.length) return;
+  const date = new Date().toLocaleDateString('sv-SE');
+  let md = `---\nlearner: ${who(learner)}\nexported: ${date}\n---\n\n# ${t('clip.exportHeading', {name: who(learner)})}\n\n`;
+  for (const c of list) md += `## ${clipSource(c)}\n\n${c.url ? `<${c.url}>\n` : ''}${new Date(c.at).toLocaleDateString('sv-SE')}\n\n${c.text.split('\n').map(l => '> ' + l).join('\n')}\n\n`;
+  download(`${date}_${who(learner)}_${t('clip.file')}.md`, md, 'text/markdown'); notify(t('clip.exported'));
+};
+$('clips').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const list = clips(), find = id => list.find(c => c.id === id);
+  if (b.id === 'clip-save' && pendingClip) {
+    if (list.length >= CLIP_MAX) { notify(t('clip.full', {n: CLIP_MAX})); return; }
+    const c = {id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...pendingClip, at: new Date().toISOString()};
+    pendingClip = null; saveClips([c, ...list]); renderClips(); notify(storageOK ? t('clip.saved') : t('save.export'));
+    document.querySelector(`[data-clip-ask="${c.id}"]`)?.focus();
+  } else if (b.id === 'clip-discard') {
+    pendingClip = null; renderClips(); notify(t('clip.discarded')); $('tab-clips').focus();
+  } else if (b.dataset.clipAsk && find(b.dataset.clipAsk)) {
+    activeClipId = b.dataset.clipAsk; openTutor({section: 'clip', itemId: activeClipId});
+  } else if (b.dataset.clipTxt && find(b.dataset.clipTxt)) {
+    const c = find(b.dataset.clipTxt); download(clipFileName(c, 'txt'), clipLessonText(c), 'text/plain'); notify(t('clip.exported'));
+  } else if (b.dataset.clipDelete && find(b.dataset.clipDelete) && confirm(t('clip.deleteConfirm'))) {
+    const id = b.dataset.clipDelete, i = list.findIndex(c => c.id === id);
+    saveClips(list.filter(c => c.id !== id)); if (activeClipId === id) activeClipId = '';
+    renderClips(); notify(t('clip.deleted')); tutorRefresh();
+    (document.querySelectorAll('[data-clip-delete]')[Math.min(i, clips().length - 1)] || $('tab-clips')).focus();
+  }
+});
+function takeClipFromHash() {
+  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (!params.has('clip')) return;
+  const clip = readClip(params.get('clip')); params.delete('clip');
+  history.replaceState(null, '', location.pathname + location.search + (params.size ? '#' + params : ''));
+  if (!clip) { notify(t('clip.invalid')); return; }
+  pendingClip = clip; showTab('clips'); $('clip-incoming-title').focus();
+}
+// Lets a second click of the bookmarklet reach this tab instead of opening another one, where the browser allows it.
+window.name = 'bunmyaku';
+window.addEventListener('hashchange', takeClipFromHash);
+
 $('print').onclick = () => window.print();
 $('ui-lang').innerHTML = UI_LANGS.map(x => `<option value="${x}" lang="${UI_HTML_LANG[x]}">${UI_LANG_NAMES[x]}</option>`).join('');
 $('ui-lang').value = UI_LANG;
@@ -623,14 +716,14 @@ function showTab(name) {
   document.querySelectorAll('[role=tabpanel]').forEach(x => x.hidden = x.id !== name);
   document.querySelectorAll('[data-tab]').forEach(x => { x.setAttribute('aria-selected', String(x.dataset.tab === name)); x.tabIndex = x.dataset.tab === name ? 0 : -1; });
   if (name === 'exercises') renderExercises(); if (name === 'words') renderWords(); if (name === 'read') renderDetail(); if (name === 'notes') renderNotes();
-  if (name === 'listening') renderListening();
+  if (name === 'listening') renderListening(); if (name === 'clips') renderClips();
   updateProgress(); window.scrollTo({top: 0, behavior: 'auto'}); tutorRefresh();
 }
 document.querySelectorAll('[data-tab]').forEach((b, i, arr) => {
   b.onclick = () => showTab(b.dataset.tab);
   b.onkeydown = e => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) { e.preventDefault(); const j = e.key === 'Home' ? 0 : e.key === 'End' ? arr.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + arr.length) % arr.length; showTab(arr[j].dataset.tab); arr[j].focus(); } };
 });
-function renderAll() { renderPassage(); renderDetail(); renderWords(); renderGrammars(); renderExercises(); renderListening(); renderNotes(); updateProgress(); }
+function renderAll() { renderPassage(); renderDetail(); renderWords(); renderGrammars(); renderExercises(); renderListening(); renderNotes(); renderClips(); updateProgress(); }
 function switchCourse(id) {
   saveStudyPosition();
   L = LESSONS.find(l => l.id === String(id)) || LESSONS[0]; course = L.id;
@@ -690,18 +783,25 @@ handle.onkeydown = e => { const width = Number(handle.getAttribute('aria-valueno
 
 const tutorChats = {};
 let tutorSection = 'read', tutorItem = '', tutorSelection = '', tutorBusy = false, tutorController = null, tutorToken = '', tutorConfigured = null;
-function chatKey() { return `${learner}:${course}:${tutorSection}`; }
+function chatKey() { return tutorSection === 'clip' ? `${learner}:clip:${tutorItem}` : `${learner}:${course}:${tutorSection}`; }
 function chat() { return tutorChats[chatKey()] || (tutorChats[chatKey()] = []); }
-function currentSection() { return !$('listening').hidden ? 'listening' : 'read'; }
-function tutorRefresh() { if (tutorBusy) return; tutorSection = currentSection(); tutorItem = tutorSection === 'listening' ? (listeningId || '') : ''; tutorSelection = ''; if (!$('tutor-dialog').hidden) tutorRender(); }
+// On the clips panel the tutor talks about one clip (the last one asked about or selected in, else the newest) instead of the lesson.
+const currentClip = () => { const list = clips(); return list.find(c => c.id === activeClipId) || list[0] || null; };
+function currentSection() { return !$('listening').hidden ? 'listening' : !$('clips').hidden && currentClip() ? 'clip' : 'read'; }
+function sectionItem(section) { return section === 'listening' ? (listeningId || '') : section === 'clip' ? currentClip().id : ''; }
+function tutorRefresh() { if (tutorBusy) return; tutorSection = currentSection(); tutorItem = sectionItem(tutorSection); tutorSelection = ''; if (!$('tutor-dialog').hidden) tutorRender(); }
+const tutorClip = () => tutorSection === 'clip' ? clips().find(c => c.id === tutorItem) || null : null;
 function tutorItemLabel() {
   for (const g of L.exercises || []) { const i = g.items.findIndex(e => e.id === tutorItem); if (i >= 0) return t('tutor.exerciseItem', {group: g.title, n: i + 1}); }
   for (const x of L.listening || []) { if (x.id === tutorItem) return t('tutor.listeningItem', {title: x.title}); const i = (x.questions || []).findIndex(q => q.id === tutorItem); if (i >= 0) return t('tutor.listeningQuestion', {title: x.title, n: i + 1}); }
   return '';
 }
 function tutorRender() {
+  if (tutorSection === 'clip' && !tutorClip()) { tutorSection = 'read'; tutorItem = ''; }
+  const clip = tutorClip();
   $('tutor-selection').hidden = !tutorSelection; $('selection-text').textContent = tutorSelection;
   const prompts = t(tutorSelection ? 'tutor.q.selection'
+    : clip ? 'tutor.q.clip'
     : tutorItem && tutorSection !== 'listening' ? 'tutor.q.exercise'
     : tutorSection === 'listening' ? 'tutor.q.listening'
     : !$('grammar').hidden ? 'tutor.q.grammar'
@@ -709,7 +809,8 @@ function tutorRender() {
     : 'tutor.q.read');
   $('tutor-suggestions').innerHTML = prompts.map(q => `<button type="button" class="suggestion">${esc(q)} <span aria-hidden="true">↗</span></button>`).join('');
   $('tutor-suggestions').querySelectorAll('button').forEach(b => b.onclick = () => { $('tutor-question').value = b.textContent.replace(/ ↗$/, ''); $('tutor-question').focus(); });
-  $('tutor-context').textContent = `${L.title}${tutorSection === 'listening' ? t('tutor.listening') : ''} · ${who(learner)}${tutorItem && tutorItemLabel() ? ' · ' + tutorItemLabel() : ''}${tutorSelection ? t('tutor.withSelection') : ''}`;
+  $('tutor-context').textContent = clip ? `${t('clip.title')} · ${clipSource(clip)} · ${who(learner)}${tutorSelection ? t('tutor.withSelection') : ''}`
+    : `${L.title}${tutorSection === 'listening' ? t('tutor.listening') : ''} · ${who(learner)}${tutorItem && tutorItemLabel() ? ' · ' + tutorItemLabel() : ''}${tutorSelection ? t('tutor.withSelection') : ''}`;
   $('tutor-messages').innerHTML = chat().map(m => `<div class="chat-message ${m.role}"><strong class="chat-author">${m.role === 'user' ? t('tutor.me') : t('tutor.teacher')}</strong><div class="chat-content">${m.role === 'assistant' ? tutorMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div></div>`).join('');
   $('tutor-send').disabled = tutorBusy || STATIC_DEMO; $('tutor-cancel').hidden = !tutorBusy;
   const copyMode = tutorConfigured === false;
@@ -730,13 +831,21 @@ function selectedStudyText() {
   const fragment = sel.getRangeAt(0).cloneContents(); fragment.querySelectorAll('rt').forEach(x => x.remove());
   return fragment.textContent.trim().slice(0, 2000);
 }
-document.addEventListener('selectionchange', () => { clearTimeout(window.selectionTimer); window.selectionTimer = setTimeout(() => { const text = selectedStudyText(); if (!text || tutorBusy) return; tutorSelection = text; tutorItem = tutorSection === 'listening' ? (listeningId || '') : ''; tutorSection = currentSection(); if (!$('tutor-dialog').hidden) tutorRender(); }, 150); });
+document.addEventListener('selectionchange', () => {
+  clearTimeout(window.selectionTimer);
+  window.selectionTimer = setTimeout(() => {
+    const text = selectedStudyText(); if (!text || tutorBusy) return;
+    const card = window.getSelection().anchorNode?.parentElement?.closest('[data-clip]'); if (card) activeClipId = card.dataset.clip;
+    tutorSelection = text; tutorSection = currentSection(); tutorItem = sectionItem(tutorSection);
+    if (!$('tutor-dialog').hidden) tutorRender();
+  }, 150);
+});
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('tutor-dialog').hidden && !document.querySelector('dialog[open]')) $('tutor-close').click(); });
 function openTutor(options = {}) {
   if (tutorBusy && options.itemId) { notify(t('tutor.busy')); return; }
   tutorSection = options.section || currentSection();
   const selection = selectedStudyText();
-  tutorItem = options.itemId || (tutorSection === 'listening' ? (listeningId || '') : '');
+  tutorItem = options.itemId || sectionItem(tutorSection);
   tutorSelection = options.selection ?? (options.itemId ? '' : (selection || tutorSelection));
   tutorRender(); $('tutor-dialog').hidden = false; document.body.classList.add('tutor-open'); tutorStatus();
   // Move focus into the panel (it covers the page on phones); touch screens get the close button so no keyboard pops up.
@@ -750,7 +859,9 @@ $('selection-clear').onclick = () => { tutorSelection = ''; tutorRender(); };
 $('tutor-clear').onclick = () => { if (tutorBusy) return; delete tutorChats[chatKey()]; tutorItem = ''; tutorSelection = ''; $('tutor-prompt-out').hidden = true; tutorRender(); };
 $('tutor-cancel').onclick = () => tutorController?.abort();
 function requestBody(question) {
-  return {lesson: course, section: tutorSection, itemId: tutorItem, question, history: chat().slice(-8), mode: $('tutor-mode').value, selection: tutorSelection};
+  const clip = tutorClip();
+  return {lesson: course, section: tutorSection, itemId: tutorItem, question, history: chat().slice(-8), mode: $('tutor-mode').value, selection: tutorSelection,
+    ...(clip ? {clip: {text: clip.text, title: clip.title, url: clip.url}} : {})};
 }
 // navigator.clipboard exists only in secure contexts (https, localhost); a phone on http://192.168.x.x has none.
 async function copyText(text) {
@@ -805,11 +916,12 @@ restoreStudyPosition();
   try {
     const lesson = params.get('lesson'), panel = params.get('panel');
     if (lesson && LESSONS.some(l => l.id === lesson)) switchCourse(lesson);
-    if (panel && ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'].includes(panel)) showTab(panel);
+    if (panel && PANELS.includes(panel)) showTab(panel);
     if (params.get('word') && vocab().some(e => e.id === params.get('word'))) { showTab('read'); selectEntry(params.get('word')); }
     if (params.get('answers') === '1') { exerciseView.answers = true; if (panel === 'exercises') renderExercises(); if (panel === 'listening') renderListening(); }
     if (params.has('tutor')) openTutor({selection: params.get('tutor') || ''});
   } finally { restoringStudy = false; }
 })();
+takeClipFromHash();
 studyReady = true;
 setInterval(saveStudyPosition, 1500);

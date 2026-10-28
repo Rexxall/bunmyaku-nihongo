@@ -25,6 +25,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <button id="tab-listening" role="tab" aria-controls="listening" aria-selected="false" data-tab="listening" data-index="05">听力</button>
 <span class="nav-section" aria-hidden="true" data-i18n="nav.records">记录</span>
 <button id="tab-notes" role="tab" aria-controls="notes" aria-selected="false" data-tab="notes" data-index="06" data-i18n="tab.notes">我的笔记</button>
+<button id="tab-clips" role="tab" aria-controls="clips" aria-selected="false" data-tab="clips" data-index="07" data-i18n="tab.clips">网页剪贴</button>
 </nav>
 <div class="sidebar-bottom"><span>文脈で、ことばを。</span><small id="pack-title"></small><small id="pack-license"></small></div>
 </aside>
@@ -61,6 +62,19 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <section id="exercises" role="tabpanel" aria-labelledby="tab-exercises" hidden></section>
 <section id="listening" role="tabpanel" aria-labelledby="tab-listening" hidden></section>
 <section id="notes" role="tabpanel" aria-labelledby="tab-notes" hidden></section>
+<section id="clips" role="tabpanel" aria-labelledby="tab-clips" hidden>
+<div class="section-bar"><h2 data-i18n="clip.title">网页剪贴</h2><div class="bar-controls"><span id="clip-count" class="minor"></span><button id="clip-export-all" data-i18n="clip.exportAll">全部导出（Markdown）</button></div></div>
+<div id="clip-incoming"></div>
+<p class="minor clip-help" data-i18n="clip.help"></p>
+<details class="clip-install"><summary data-i18n="clip.install">安装书签小工具</summary>
+<p><span data-i18n="clip.installDesktop"></span> <a id="clip-bookmarklet" class="bookmarklet" href="#" data-i18n="clip.bookmarklet">剪到 Bunmyaku</a></p>
+<p data-i18n="clip.installPhone"></p>
+<textarea id="clip-code" readonly rows="3" aria-label="书签代码" data-i18n-label="clip.code"></textarea>
+<div class="toolbar"><button id="clip-copy" type="button" data-i18n="clip.copyCode">复制代码</button></div>
+<p class="minor" data-i18n="clip.exportHelp"></p>
+</details>
+<div id="clip-list"></div>
+</section>
 </main></div>
 <button id="tutor-open" class="primary" data-i18n="tutor.open">问老师</button>
 <button id="detail-backdrop" aria-label="关闭词语解释" data-i18n-label="detail.backdrop" tabindex="-1"></button>

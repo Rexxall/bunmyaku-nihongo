@@ -63,3 +63,15 @@ main{padding-bottom:120px}
 .header-more .more-menu summary{list-style:revert;padding:4px 0;font-size:12px;color:var(--muted);min-height:0}
 .more-menu .course-context{margin:0 0 4px;padding:0}
 body:not(.hide-ruby) .detail h3:has(ruby)+.kana{display:none}
+.clip-help{margin:0 0 12px;max-width:760px}
+.clip-install{background:var(--paper);border:1px solid #dfe7da;border-radius:12px;padding:10px 16px;margin:0 0 16px;max-width:760px}
+.clip-install summary{cursor:pointer;font-weight:600}
+.clip-install p{margin:8px 0}
+.bookmarklet{display:inline-block;padding:4px 14px;border:1px dashed var(--blue);border-radius:999px;font-weight:600;text-decoration:none;cursor:grab}
+#clip-code{display:block;width:100%;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;resize:vertical}
+.clip-install .toolbar{margin:8px 0 0}
+.clip-card blockquote{margin:0 0 8px;font-size:16px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+.clip-card .clip-source{overflow-wrap:anywhere}
+.clip-card .toolbar{gap:8px;margin:8px 0 0}
+.clip-incoming{border:2px solid var(--blue);margin-bottom:16px}
+.clip-incoming h3:focus{outline:none}

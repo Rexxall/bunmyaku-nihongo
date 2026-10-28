@@ -9,7 +9,8 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
 // Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
 const locale = process.env.TEST_LOCALE || 'zh-CN';
 const axeSource = fs.readFileSync(process.env.AXE_PATH || require.resolve('axe-core/axe.min.js'), 'utf8');
-const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
+const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes', 'clips'];
+const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の本屋が今月で閉店するらしい。', title: '町のニュース', url: 'https://example.com/news/1'}));
 
 (async () => {
   const browser = await chromium.launch(launch);
@@ -51,6 +52,12 @@ const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
       await page.locator('#profiles-edit').click(); await scan(`${width}px profiles dialog`);
       await open(width, `#lesson=${first}&panel=read`);
       await page.locator('#translation-open').click(); await scan(`${width}px translation dialog`);
+      await open(width, `#lesson=${first}&panel=clips`);
+      await page.locator('.clip-install summary').click(); await scan(`${width}px clips: bookmarklet help`);
+      await page.evaluate(h => { location.hash = h; }, clipHash); await page.waitForSelector('#clip-incoming-title');
+      if (!(await page.locator('#clip-list .clip-card').count())) { await page.locator('#clip-save').click(); await page.evaluate(h => { location.hash = h; }, clipHash); await page.waitForSelector('#clip-incoming-title'); }
+      await scan(`${width}px clips: arriving and saved clip`);
+      await page.locator('[data-clip-ask]').first().click(); await page.waitForTimeout(150); await scan(`${width}px clips: tutor on a clip`);
     }
 
     // Keyboard paths.
@@ -89,12 +96,22 @@ const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
     await page.keyboard.press('Escape'); await page.waitForTimeout(100);
     await expectFocus('tutor closed', '#tutor-open');
 
+    // An arriving clip takes focus; Save moves it to the saved clip, Discard back to the tab.
+    await open(1440, `#lesson=${lessons[0]}&panel=read`);
+    await page.evaluate(h => { location.hash = h; }, clipHash); await page.waitForSelector('#clip-incoming-title');
+    await expectFocus('clip arrived', '#clip-incoming-title');
+    await page.locator('#clip-save').focus(); await page.keyboard.press('Enter');
+    if (!(await page.evaluate(() => document.activeElement.dataset.clipAsk))) failures.push('clip saved: focus is not on the saved clip');
+    await page.evaluate(h => { location.hash = h; }, clipHash); await page.waitForSelector('#clip-incoming-title');
+    await page.locator('#clip-discard').focus(); await page.keyboard.press('Enter');
+    await expectFocus('clip discarded', '#tab-clips');
+
     if (failures.length) {
       console.error(`${failures.length} accessibility problem(s) in ${scans} scans:\n` + failures.join('\n'));
       process.exitCode = 1;
       return;
     }
-    console.log(`PASS (${locale}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu and dialogs) and keyboard paths.`);
+    console.log(`PASS (${locale}): ${scans} axe scans (${lessons.length} lessons × ${panels.length} panels at 1440 and 390 px, plus drawer, tutor, answers, menu, dialogs and web clips) and keyboard paths.`);
   } finally {
     await browser.close();
   }

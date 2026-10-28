@@ -138,6 +138,19 @@ class Importer(unittest.TestCase):
             self.assertEqual(rep.errors, [], rep.errors)
             self.assertTrue(any('缺少注音' in w for w in rep.warnings))
 
+    def test_web_clip_export_keeps_its_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            clip = tmp / 'clip.txt'  # what the study page's "Export as lesson text" writes
+            clip.write_text('# 町のニュース\nSource: 町のニュース · https://example.com/news/1\n\n駅前の本屋が今月で閉店するらしい。\n\n残念だ。\n', encoding='utf-8')
+            for extra, source in [([], '町のニュース · https://example.com/news/1'), (['--source', '自分で書き直し'], '自分で書き直し')]:
+                out = tmp / ('out' + str(len(extra)))
+                self.assertEqual(import_text.main(['--text', str(clip), *extra, '--out', str(out), '--id', 'clip', '--license', '私人材料，不分发']), 0)
+                lesson = packlib.load_pack(out)['lessons'][0]
+                self.assertEqual((lesson['title'], lesson['source']), ('町のニュース', source))
+                self.assertEqual([p['text'] for p in lesson['paragraphs']], ['駅前の本屋が今月で閉店するらしい。', '残念だ。'])
+                self.assertEqual(validate_pack.validate(out).errors, [])
+
     def import_words(self, tmp: Path, vocab: Path, *extra: str, errors: int = 0) -> list[dict]:
         (tmp / 'lesson.txt').write_text('毎朝、公園を歩く。日本語を勉強する。\n', encoding='utf-8')
         out = tmp / 'out'

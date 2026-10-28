@@ -9,7 +9,7 @@ const launch = {headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: p
 // Interface language comes from the browser locale (zh-CN unless TEST_LOCALE says otherwise).
 const locale = process.env.TEST_LOCALE || 'zh-CN';
 const widths = (process.env.LAYOUT_WIDTHS || '1440,1180,1024,820,768,650,390,360').split(',').map(Number);
-const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes'];
+const panels = ['read', 'words', 'grammar', 'exercises', 'listening', 'notes', 'clips'];
 
 // Runs in the page. Returns a list of human-readable problems.
 function sweep() {
@@ -98,6 +98,26 @@ function sweep() {
       }
     }
 
+    // Web clips: an arriving clip next to a saved one, both with long text, title and address, and the bookmarklet help open.
+    const longClip = {text: '駅前の本屋が今月で閉店するらしい。'.repeat(12) + '\n\n' + 'ア'.repeat(80), title: 'とても長いページの題名'.repeat(8), url: 'https://example.com/' + 'a'.repeat(300)};
+    const clipHash = '#clip=' + encodeURIComponent(JSON.stringify(longClip));
+    for (const width of widths) {
+      await page.setViewportSize({width, height: 900});
+      await page.goto(`${url}#lesson=${lessons[0]}&panel=clips`);
+      await page.reload();
+      await page.evaluate(h => { location.hash = h; }, clipHash);
+      await page.waitForSelector('#clip-incoming-title');
+      if (!(await page.locator('#clip-list .clip-card').count())) {
+        await page.locator('#clip-save').click();
+        await page.evaluate(h => { location.hash = h; }, clipHash);
+        await page.waitForSelector('#clip-incoming-title');
+      }
+      await page.locator('.clip-install').evaluate(d => { d.open = true; });
+      await page.waitForTimeout(80);
+      for (const problem of await page.evaluate(sweep)) failures.push(`${width}px · clips with an arriving and a saved clip: ${problem}`);
+      views++;
+    }
+
     // The header menu closes after an action, on Escape, and on a click elsewhere.
     await page.setViewportSize({width: 1024, height: 800});
     await page.goto(url + '#lesson=' + lessons[0] + '&panel=read');
@@ -140,7 +160,7 @@ function sweep() {
       process.exitCode = 1;
       return;
     }
-    console.log(`PASS (${locale}): ${views} views (${lessons.length} lessons × ${widths.length} widths × ${panels.length} panels, tutor open and closed on wide screens), the header menu, and leaving a playing player.`);
+    console.log(`PASS (${locale}): ${views} views (${lessons.length} lessons × ${widths.length} widths × ${panels.length} panels, tutor open and closed on wide screens), web clips at every width, the header menu, and leaving a playing player.`);
   } finally {
     await browser.close();
   }

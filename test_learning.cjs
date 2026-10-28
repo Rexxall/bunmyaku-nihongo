@@ -13,9 +13,9 @@ const locale = process.env.TEST_LOCALE || 'zh-CN';
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    let configured = false, calls = 0, prompts = 0;
+    let configured = false, calls = 0, prompts = 0, lastChat = null;
     await page.route('**/api/status', r => r.fulfill({json: {configured, token: 'mock', model: 'mock', preset: 'test', pack: {id: 'demo-pack'}}}));
-    await page.route('**/api/chat', r => { calls++; return r.fulfill({json: {answer: '**保存测试**', model: 'mock'}}); });
+    await page.route('**/api/chat', r => { calls++; lastChat = r.request().postDataJSON(); return r.fulfill({json: {answer: '**保存测试**', model: 'mock'}}); });
     await page.route('**/api/prompt', r => { prompts++; return r.fulfill({json: {prompt: '【给辅导老师的说明】\n模拟提示词'}}); });
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], {origin: new URL(url).origin}).catch(() => {});
     await page.goto(url);
@@ -141,12 +141,111 @@ const locale = process.env.TEST_LOCALE || 'zh-CN';
     assert.ok(rows[0][4]);
     assert.equal(rows[0][4], await page.evaluate(id => record('v:' + id).text || '', words[0].id));
     assert.ok(rows.every((r, i) => (words[i].forms || [words[i].word]).some(f => r[3].includes(f))), 'sentence contains the word');
+    // Web clips. The bookmarklet runs on someone else's page: it takes the selection without furigana and opens
+    // this page with #clip=<JSON> in the tab named 'bunmyaku'.
+    const href = await page.getAttribute('#clip-bookmarklet', 'href');
+    assert.equal(await page.inputValue('#clip-code'), href);
+    const code = decodeURIComponent(href.replace(/^javascript:/, ''));
+    const other = await browser.newPage({locale});
+    await other.setContent('<title>町のニュース</title><p>駅前の<ruby>本屋<rt>ほんや</rt></ruby>が今月で閉店するらしい。</p>');
+    await other.evaluate(() => { window.opened = []; window.open = (u, n) => { opened.push([u, n]); }; window.alert = m => { window.alerted = m; }; });
+    await other.evaluate(code);
+    assert.ok(await other.evaluate(() => window.alerted && !opened.length), 'nothing selected: alert, no window');
+    await other.evaluate(() => { const r = document.createRange(); r.selectNodeContents(document.querySelector('p')); getSelection().removeAllRanges(); getSelection().addRange(r); });
+    // Run the link itself, as a bookmark does, so its percent-encoding is exercised too.
+    await other.evaluate(link => { location.href = link; }, href);
+    await other.waitForFunction(() => opened.length > 0);
+    const [[clipURL, target]] = await other.evaluate(() => opened);
+    await other.close();
+    assert.equal(target, 'bunmyaku');
+    assert.ok(clipURL.startsWith(url + '#clip='), clipURL);
+    const sent = JSON.parse(decodeURIComponent(clipURL.slice(clipURL.indexOf('#clip=') + 6)));
+    assert.deepEqual([sent.text, sent.title], ['駅前の本屋が今月で閉店するらしい。', '町のニュース']);
+    const clipLink = c => url + '#clip=' + encodeURIComponent(JSON.stringify(c));
+    const clip = {...sent, url: 'https://example.com/news/1'};
+
+    // The study page is already open: the hash change brings the clip in, but nothing is stored until Save.
+    await page.goto(clipLink(clip));
+    await page.waitForSelector('#clip-incoming-title');
+    assert.equal(await page.evaluate(() => location.hash), '', 'clip removed from the address');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'clip-incoming-title');
+    assert.ok(await page.locator('#clips').isVisible());
+    assert.equal(await page.evaluate(() => localStorage.getItem('bunmyaku:clips')), null, 'not stored before Save');
+    await page.locator('#clip-save').click();
+    const me = await page.evaluate(() => learner);
+    const storedClips = await page.evaluate(() => JSON.parse(localStorage.getItem('bunmyaku:clips')));
+    assert.deepEqual(storedClips[me].map(c => [c.text, c.title, c.url]), [[clip.text, clip.title, clip.url]]);
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 1);
+    assert.equal(await page.getAttribute('#clip-list .clip-source a', 'href'), clip.url);
+    assert.equal(await page.getAttribute('#clip-list .clip-source a', 'rel'), 'noopener noreferrer');
+
+    // A fresh load gets the clip too. Markup stays text, a javascript: address is dropped, Discard keeps nothing.
+    await page.goto('about:blank');
+    const fresh = page;
+    await fresh.goto(clipLink({text: '<img src=x onerror="window.pwned=1">テスト', title: '<b>題</b>', url: 'javascript:alert(1)'}));
+    await fresh.waitForSelector('#clip-incoming-title');
+    assert.equal(await fresh.locator('.clip-incoming blockquote').textContent(), '<img src=x onerror="window.pwned=1">テスト');
+    assert.equal(await fresh.locator('.clip-incoming img, .clip-incoming b, .clip-incoming a').count(), 0);
+    await fresh.locator('#clip-discard').click();
+    assert.equal(await fresh.evaluate(() => window.pwned), undefined);
+    assert.equal(await fresh.locator('#clip-list .clip-card').count(), 1, 'discarded clip not added');
+
+    // Clicking the bookmarklet on the study page itself only explains where it goes.
+    await page.locator('.clip-install summary').click();
+    await page.locator('#clip-bookmarklet').click();
+    assert.ok(await page.locator('#toast').isVisible());
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 1);
+
+    // Asking about a clip sends the clip as context instead of the lesson.
+    await page.locator('[data-clip-ask]').click();
+    await page.waitForFunction(() => tutorConfigured === true);
+    assert.ok((await page.locator('#tutor-context').textContent()).includes('町のニュース'));
+    await page.locator('#tutor-question').fill('大意は？');
+    await page.locator('#tutor-send').click();
+    await page.waitForFunction(() => !tutorBusy);
+    assert.equal(lastChat.section, 'clip');
+    assert.deepEqual(lastChat.clip, {text: clip.text, title: clip.title, url: clip.url});
+    await page.locator('#tutor-close').click();
+
+    // Clips belong to a profile.
+    await page.locator('.header-more > summary').click();
+    await page.locator('#profiles-edit').click();
+    await page.locator('#profiles-text').fill(me + '\n友人');
+    await page.locator('#profiles-save').click();
+    await page.selectOption('#learner', '友人');
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 0);
+    await page.selectOption('#learner', me);
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 1);
+
+    // Lesson text for tools/import_text.py, and a Markdown copy of every clip.
+    const [txt] = await Promise.all([page.waitForEvent('download'), page.locator('[data-clip-txt]').click()]);
+    assert.ok(txt.suggestedFilename().endsWith('.txt'));
+    assert.equal(require('fs').readFileSync(await txt.path(), 'utf8'), `# 町のニュース\nSource: 町のニュース · ${clip.url}\n\n${clip.text}\n`);
+    const [md] = await Promise.all([page.waitForEvent('download'), page.locator('#clip-export-all').click()]);
+    assert.ok(require('fs').readFileSync(await md.path(), 'utf8').includes(`<${clip.url}>`));
+
+    // Delete asks first; the list survives a reload until then.
+    await page.reload();
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 1);
+    page.once('dialog', d => d.dismiss());
+    await page.locator('[data-clip-delete]').click();
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 1);
+    page.once('dialog', d => d.accept());
+    await page.locator('[data-clip-delete]').click();
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 0);
+    assert.ok(await page.locator('#clip-list .empty-panel').isVisible());
+    // A stored entry edited by hand still renders as text, and a javascript: address does not become a link.
+    await page.evaluate(name => localStorage.setItem('bunmyaku:clips', JSON.stringify({[name]: [{id: 'x', text: '<b>手</b>', title: 7, url: 'javascript:alert(1)', at: 'x'}]})), me);
+    await page.reload();
+    assert.equal(await page.locator('#clip-list .clip-card').count(), 1);
+    assert.equal(await page.locator('#clip-list .clip-card a, #clip-list .clip-card b').count(), 0);
+
     for (const width of [820, 390]) {
       await page.setViewportSize({width, height: 1000});
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     }
     assert.deepEqual(errors, []);
-    console.log('PASS: copy-prompt mode (with clipboard fallback), relay, exercise reveal, notes per profile, migration, Markdown and Anki export.');
+    console.log('PASS: copy-prompt mode (with clipboard fallback), relay, exercise reveal, notes per profile, migration, Markdown and Anki export, web clips.');
   } finally {
     await browser.close();
   }

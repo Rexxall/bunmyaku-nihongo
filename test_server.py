@@ -117,6 +117,20 @@ class ServerTest(unittest.TestCase):
         self.assertIn('この形は何ですか', result['prompt'])
         self.assertIn('selected_exercise', result['prompt'])
 
+    def test_web_clip_context(self):
+        serve.tutor_config = lambda: UNCONFIGURED
+        clip = {'text': '駅前の本屋が今月で閉店するらしい。', 'title': '町のニュース', 'url': 'https://example.com/news/1'}
+        body = {**self.body, 'section': 'clip', 'itemId': 'c1', 'clip': clip}
+        code, result = self.post('/api/prompt', payload=body)
+        self.assertEqual(code, 200)
+        self.assertIn(clip['text'], result['prompt'])
+        self.assertIn(clip['url'], result['prompt'])
+        self.assertIn('剪贴', result['prompt'])
+        self.assertNotIn(self.lesson['paragraphs'][0]['text'], result['prompt'])
+        self.assertNotIn('exercise_index', result['prompt'])
+        for bad in [None, 'text', {'text': ''}, {'text': 'あ' * 4001}, {'text': 'あ', 'url': 'x' * 2001}, {'text': 'あ', 'title': 5}]:
+            self.assertEqual(self.post('/api/prompt', payload={**body, 'clip': bad})[0], 400, bad)
+
     def test_context_and_system_prompt(self):
         content = self.server.content
         ctx = json.loads(serve.lesson_context(content, self.lesson['id'], 'read', 'fill-1'))

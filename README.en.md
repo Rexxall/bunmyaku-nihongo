@@ -25,6 +25,7 @@ Bunmyaku is a local web app. It ships no textbook. You (or your AI agent) arrang
 | Exercises | Fill-in answers shown in place, correct choices marked, rewriting and open questions; hints, answers and explanations toggle separately |
 | Listening | Play, change speed, ±5 s, replay, A/B loop and saved segments; transcript lines and translations hide independently |
 | Tutor | Select any word or sentence and ask; the server sends the model only the proofread text of the current lesson. No API key? Copy the assembled prompt instead |
+| Web clips | Select Japanese on any page and send it to the study desk with a bookmarklet; once saved under the current profile, ask the tutor about it or export it as plain text and turn it into a lesson with the importer |
 | Records | Notes, answers and listening progress are saved in the browser per learner profile; one profile by default, more if you study with someone; export to Markdown, and vocabulary to Anki with the sentence it came from and your own explanation |
 | Interface | Chinese, Japanese or English, following the browser language; switch in the top-right menu. Course content itself is not translated |
 
@@ -82,8 +83,9 @@ An Anki deck works as the word list too: export "Notes in Plain Text" (.txt), or
 ## Data and privacy
 
 - Study records live in the current browser, separated by pack, lesson and profile; nothing syncs across devices unless you export.
+- Web clips stay in the current browser under the current profile; the server has no endpoint that stores anything. The bookmarklet hands the study page only the selected text, the page title and its address.
 - The server serves only the page, its API and the audio files a pack references; pack files and repository files are never exposed.
-- The tutor receives the question, the selected text, the proofread lesson text and recent turns at send time; audio, notes and keys are never sent.
+- The tutor receives the question, the selected text, the proofread lesson text and recent turns at send time; when you ask about a clip, the clip is sent instead of the lesson text. Audio, notes and keys are never sent.
 - Keep copyrighted textbooks and private packs outside the repository and point `--content` at them. Never commit them.
 
 ## Layout

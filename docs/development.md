@@ -111,6 +111,7 @@ python3 -m unittest -q              # 可选：确认这台机器上一切正常
 | 课程包 | 你用 `--content` 指向的目录 |
 | 答疑配置（含密钥） | macOS `~/Library/Application Support/bunmyaku/tutor.json`；Linux `$XDG_CONFIG_HOME/bunmyaku/tutor.json`；Windows `%APPDATA%\bunmyaku\tutor.json` |
 | 学习记录 | 在浏览器的 localStorage 里，按课程包、课、档案分键；右上角菜单可导出 Markdown 笔记，或把本课生词导出成 Anki 可直接导入的文本 |
+| 网页剪贴 | 也在 localStorage（`bunmyaku:clips`，按档案分开，不分课程包）；“网页剪贴”面板可全部导出成 Markdown |
 
 `.local/releases/` 是本机快照，不是异地备份。
 
@@ -145,9 +146,17 @@ python3 tools/import_text.py --text 课文.txt --vocab 牌组.txt --map word=1,r
 
 **导出给 Anki。** 页面右上角菜单的“生词导出给 Anki”生成 Anki 2.1.54 起能识别文件头的 `.txt`：每个词一条，列为词、读音、释义、原文例句（取课文里含这个词的那一句）、我的解释、出处，标签为 `bunmyaku::包id::课id`，自认能解释的词另加 `bunmyaku::known`。这份文件也能反过来交给导入器：`--map word=词,reading=读音,meaning=释义`。
 
+**网页剪贴。** “网页剪贴”面板里有书签小工具（一个 `javascript:` 链接，地址里写着当前学习台的网址）。在别的网页选中文字再点它，它去掉选区里的注音（`<rt>`），把文字（≤4000 字）、网页标题和网址编成 JSON，放进学习台网址的 `#clip=` 后，在名为 `bunmyaku` 的标签页里打开。`#` 后面的部分不会发给服务端；页面读出后立即把它从地址栏去掉，显示“收到一段剪贴”，点“保存”才写进 `bunmyaku:clips`。所以别的网站自己打开这种链接，也只会得到一段待确认的剪贴。只保留 `http`／`https` 网址，文字一律按纯文本显示。每段剪贴可以“问老师”（答疑以这段剪贴代替本课资料，见 [答疑上下文协议](tutor-protocol.md)），或“导出成课文（.txt）”：第一行 `# 标题`，第二行 `Source: 标题 · 网址`，之后是正文，导入器会把 `Source:` 行读成出处：
+
+```sh
+python3 tools/import_text.py --text 2026-10-28_町のニュース_网页剪贴.txt --out ~/clip-pack --id clip-pack --license "私人材料，不分发"
+```
+
+手机浏览器一般不能把链接拖进书签：先随便收藏一个网页，再把书签地址换成面板里的代码。书签小工具的地址写死了生成它时学习台的网址；换了端口或局域网地址，要重新装一次。网站的内容安全策略可能拦下书签小工具，这时只能手动复制文字。
+
 ## 在线演示（静态页）
 
-`tools/export_static.py` 把课程包导出成纯静态页面：一个 `index.html`（与服务端拼出的页面相同，另加静态标记）加上课程包引用的音频。阅读、词汇、语法、练习、听力和笔记照常可用；答疑需要本机服务，静态页里显示为不可用。
+`tools/export_static.py` 把课程包导出成纯静态页面：一个 `index.html`（与服务端拼出的页面相同，另加静态标记）加上课程包引用的音频。阅读、词汇、语法、练习、听力、笔记和网页剪贴照常可用；答疑需要本机服务，静态页里显示为不可用。
 
 ```sh
 python3 tools/export_static.py examples/demo-pack --out _site
@@ -182,9 +191,9 @@ for l in ja-JP en-US; do TEST_LOCALE=$l node test_layout.cjs && TEST_LOCALE=$l n
 
 界面语言跟随浏览器语言，所以测试用 `TEST_LOCALE` 设定浏览器语言（默认 `zh-CN`）。`test_layout.cjs` 与 `test_a11y.cjs` 要在三种语言下各跑一遍：英文标签更长，最容易撑破布局。
 
-`test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 六个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
+`test_layout.cjs` 按每课 × 八种宽度（1440 到 360）× 七个面板逐一打开页面，宽屏时答疑栏开关各测一次，检查：页面横向滚动、文字超出自身盒子、元素超出侧栏或卡片、界面标签折成两行、填空横线被拆开；每种宽度再看一次“网页剪贴”里待确认和已保存的长剪贴（长标题、长网址）以及展开的安装说明；再检查右上角菜单在选完、按 Esc、点别处时收起，以及播放中切走后旧音频事件不报错。宽度可用 `LAYOUT_WIDTHS=1440,390` 缩小范围。改样式后先跑它。
 
-`test_a11y.cjs` 用 axe-core 按 WCAG 2.2 A／AA 和通用最佳实践扫描：每课 × 六个面板，宽屏和手机宽度各一遍，另扫词条抽屉、答疑栏、显示答案、右上角菜单和两个对话框；再走一遍键盘路径：第一下 Tab 到“跳到学习内容”、面板标签用方向键切换、词条抽屉打开时焦点进入、按 Esc 回到原词、语法“在正文中定位”把焦点移到正文、答疑栏打开时焦点进输入框、关闭后回到“问老师”。
+`test_a11y.cjs` 用 axe-core 按 WCAG 2.2 A／AA 和通用最佳实践扫描：每课 × 七个面板，宽屏和手机宽度各一遍，另扫词条抽屉、答疑栏、显示答案、右上角菜单、两个对话框，以及网页剪贴的安装说明、待确认与已保存的剪贴、就剪贴提问的答疑栏；再走一遍键盘路径：第一下 Tab 到“跳到学习内容”、面板标签用方向键切换、词条抽屉打开时焦点进入、按 Esc 回到原词、语法“在正文中定位”把焦点移到正文、答疑栏打开时焦点进输入框、关闭后回到“问老师”；收到剪贴时焦点到“收到一段剪贴”，保存后到这段剪贴，丢弃后回到面板标签。
 
 浏览器测试需要 `npm install --no-save playwright@1.64.1 axe-core@4.10.3 && npx playwright install chromium`；通过 `STUDY_URL` 改地址，`PLAYWRIGHT_MODULE` 指定已装好的 Playwright，`PLAYWRIGHT_CHANNEL=chrome` 使用本机 Chrome。GitHub Actions 在每次推送时跑全部测试（`.github/workflows/test.yml`），这个工作流不发布任何东西：服务端、发布流程、工具和启动入口的测试在 Linux、Windows、macOS 上各跑一遍，Python 用 3.9 和当前最新版（GitHub 的 macOS 与最新 Ubuntu 机器没有 3.9 安装包，3.9 在 Windows 和 Ubuntu 24.04 上跑），并实际运行 `bunmyaku.command`／`bunmyaku.bat`；浏览器测试在 Linux 上跑。
 
@@ -200,4 +209,4 @@ for l in ja-JP en-US; do TEST_LOCALE=$l node test_layout.cjs && TEST_LOCALE=$l n
 
 `study-mobile.png` 是三张 390×844、两倍像素的手机截图（课文、词条卡、听力）并排拼成；`social-preview.png`（1280×640）是仓库的分享预览图，在 GitHub 仓库设置的 Social preview 里上传。
 
-页面支持 `#lesson=`、`panel=`（read／words／grammar／exercises／listening／notes）、`word=`、`answers=1`、`tutor=选中文字` 深链接。截图不得出现版权教材页面、个人笔记或密钥。
+页面支持 `#lesson=`、`panel=`（read／words／grammar／exercises／listening／notes／clips）、`word=`、`answers=1`、`tutor=选中文字` 深链接。截图不得出现版权教材页面、个人笔记或密钥。

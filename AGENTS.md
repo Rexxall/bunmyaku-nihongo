@@ -27,4 +27,4 @@
 
 禁止：编造例句出处、页码、作者、词源；把没核过的注音标成已核；在课程包里写私人信息、密钥或本机绝对路径；为了“完整”补写材料里没有的内容。
 
-最小起点：`python3 tools/import_text.py --text 课文.txt --vocab 词表.csv --out 目录 --id 包id` 生成全部 `unverified` 的骨架，再按上面的步骤补齐。用户给的是 Anki 牌组时，`--vocab` 直接接 Anki 导出的 `.txt` 或旧格式 `.apkg`，用 `--map` 指明列，见 `docs/development.md`。
+最小起点：`python3 tools/import_text.py --text 课文.txt --vocab 词表.csv --out 目录 --id 包id` 生成全部 `unverified` 的骨架，再按上面的步骤补齐。用户给的是学习台“网页剪贴”导出的 `.txt` 时，直接作为 `--text`（第一行标题、`Source:` 行出处会被读入）；网页文字的版权属于原网站，课程包授权要写成私人材料。用户给的是 Anki 牌组时，`--vocab` 直接接 Anki 导出的 `.txt` 或旧格式 `.apkg`，用 `--map` 指明列，见 `docs/development.md`。

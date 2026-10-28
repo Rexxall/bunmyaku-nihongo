@@ -28,7 +28,7 @@ python3 -m bunmyaku --open
 
 - 服务端只用 Python 标准库，支持 Python 3.9 及以上；前端不引入构建工具，页面由 `src/page.html` 在内存里拼装。
 - 改课程包格式时，先改 [docs/pack-format.md](docs/pack-format.md) 和校验器，再改代码。
-- 改样式或页面结构后跑 `test_layout.cjs`：它会在每课 × 八种宽度 × 六个面板下检查横向滚动、文字溢出和标签折行。
+- 改样式或页面结构后跑 `test_layout.cjs`：它会在每课 × 八种宽度 × 七个面板下检查横向滚动、文字溢出和标签折行。
 - 改颜色、按钮或弹出层后跑 `test_a11y.cjs`：axe-core 无障碍扫描加键盘焦点路径。新按钮要有能读出来的文字，文字颜色对比度至少 4.5:1。
 - 界面文字写进 `src/i18n.js`，中、日、英三种同时给；不会写某种语言就先照搬中文并在 PR 里说明，维护者补齐。译文改进也欢迎单独提 PR。
 - 提交信息写一行英文，说明做了什么，例如 `Fix ruby spacing in vocabulary cards`。

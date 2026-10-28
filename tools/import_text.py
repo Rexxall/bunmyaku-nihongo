@@ -6,7 +6,8 @@
     python3 tools/import_text.py --text lesson.txt --vocab deck.txt --map word=1,meaning=2 --out my-pack --id my-pack
 
 Text file: paragraphs separated by blank lines. A first line starting with ``# `` becomes the
-lesson title. ``--translation`` takes a second text file with the same number of paragraphs.
+lesson title; a ``Source: …`` line right after it becomes the source unless ``--source`` is given
+(the study page's web-clip export writes both). ``--translation`` takes a second text file with the same number of paragraphs.
 CSV columns (header required, extra columns ignored): ``word, reading, meaning`` plus optional
 ``forms`` (``／``-separated word forms found in the text), ``simple``, ``similar``, ``memo``.
 Anki word lists: a "Notes in Plain Text" export (``.txt``, tab-separated, ``#`` header lines allowed)
@@ -41,14 +42,17 @@ FIELDS = ('word', 'reading', 'meaning', 'forms', 'simple', 'similar', 'memo')
 SEPARATORS = {'comma': ',', 'semicolon': ';', 'tab': '\t', 'space': ' ', 'pipe': '|', 'colon': ':'}
 
 
-def read_paragraphs(path: Path) -> tuple[str | None, list[str]]:
+def read_paragraphs(path: Path) -> tuple[str | None, list[str], str]:
     raw = path.read_text(encoding='utf-8').replace('\r\n', '\n').strip()
-    title = None
+    title, source = None, ''
     if raw.startswith('# '):
         first, _, rest = raw.partition('\n')
         title, raw = first[2:].strip(), rest.strip()
+        if raw.startswith('Source: '):
+            first, _, rest = raw.partition('\n')
+            source, raw = first[8:].strip(), rest.strip()
     paragraphs = [re.sub(r'\s*\n\s*', '', block).strip() for block in re.split(r'\n\s*\n', raw) if block.strip()]
-    return title, paragraphs
+    return title, paragraphs, source
 
 
 def anki_text(value: str) -> str:
@@ -180,19 +184,19 @@ def read_vocab(path: Path, full_text: str, mapping: str | None = None) -> list[d
 
 
 def build(args) -> tuple[dict, dict, list[str]]:
-    title, paragraphs = read_paragraphs(Path(args.text))
+    title, paragraphs, source = read_paragraphs(Path(args.text))
     if not paragraphs:
         raise SystemExit('课文为空')
     translations: list[str] = []
     if args.translation:
-        _, translations = read_paragraphs(Path(args.translation))
+        _, translations, _ = read_paragraphs(Path(args.translation))
         if len(translations) != len(paragraphs):
             raise SystemExit(f'译文段落数 {len(translations)} 与课文段落数 {len(paragraphs)} 不一致')
     full = '\n'.join(paragraphs)
     vocab = read_vocab(Path(args.vocab), full, args.map) if args.vocab else []
     notes = [f"词条「{e['word']}」：{e.pop('_note')}" for e in vocab if '_note' in e]
     lesson = {
-        'id': args.lesson_id, 'title': args.lesson_title or title or args.lesson_id, 'source': args.source,
+        'id': args.lesson_id, 'title': args.lesson_title or title or args.lesson_id, 'source': args.source or source,
         'status': '由 import_text.py 生成：注音与译文尚未人工核对。',
         'paragraphs': [{'text': p, 'ruby': None, 'ruby_status': 'unverified',
                         **({'translation': {'text': translations[i], 'status': args.translation_status}} if translations else {})}

@@ -85,7 +85,7 @@ my-pack/
 | 5 | 答疑提供商 | `serve.py`：OpenAI 兼容端点＋预设；`/api/prompt` 无 key 复制模式；系统提示拼接 |
 | 6 | 演示课程包 | `examples/demo-pack/`：两课原创课文、各 10 词、3 语法、6 练习；听力条目各一（一条有占位音频、一条无音频） |
 | 7 | 测试与 CI | `test_server.py` `test_releases.py` `test_pack_tools.py` `test_browser.cjs` `test_learning.cjs` `test_resume.cjs`；`.github/workflows/test.yml` |
-| 8 | 许可证 | `LICENSE`（MIT，Abduhelil）；演示包 `examples/demo-pack/LICENSE`（CC0） |
+| 8 | 许可证 | `LICENSE`（MIT，Rexxall）；演示包 `examples/demo-pack/LICENSE`（CC0） |
 
 ### 第二批：课程包格式与 agent 技能
 

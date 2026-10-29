@@ -46,8 +46,10 @@ function sweep() {
     const s = getComputedStyle(el), r = el.getBoundingClientRect();
     const leaf = [...el.children].every(c => getComputedStyle(c).display.startsWith('inline') || c.tagName === 'RUBY');
 
-    // Text running past its own box (scroll containers are allowed to).
-    if (leaf && s.display !== 'inline' && !['auto', 'scroll'].includes(s.overflowX) && el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 2) {
+    // Text running past its own box (scroll containers are allowed to, and so is a capsule that cuts its value
+    // with an ellipsis and shows it whole in a title, like the native selects skipped above).
+    const truncated = s.textOverflow === 'ellipsis' && s.overflowX === 'hidden' && el.closest('[title]');
+    if (leaf && !truncated && s.display !== 'inline' && !['auto', 'scroll'].includes(s.overflowX) && el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 2) {
       problems.push(`text overflows ${label(el)} "${text(el)}" (${el.scrollWidth}px in ${el.clientWidth}px)`);
     }
     // Anything past the right edge of the window that no scroller clips.

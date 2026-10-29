@@ -19,7 +19,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <a class="skip-link" href="#main" data-i18n="skip">跳到学习内容</a>
 <aside class="sidebar">
 <div class="brand"><span class="brand-mark">文</span><div><strong>Bunmyaku</strong><small>LEARN JAPANESE IN CONTEXT</small></div></div>
-<div class="coursebar"><label for="course" data-i18n="course.label">正在读的课</label><select id="course" aria-label="选择课" data-i18n-label="course.select"></select><button id="prev-course" aria-label="上一课" data-i18n-label="course.prev">←</button><span class="course-count" id="course-position" aria-live="polite"></span><button id="next-course" aria-label="下一课" data-i18n-label="course.next">→</button></div>
+<div class="coursebar"><label for="course" data-i18n="course.label">正在读的课</label><select id="course" aria-label="选择课" data-i18n-label="course.select"></select><span id="course-picker" class="glass-only"></span><button id="prev-course" aria-label="上一课" data-i18n-label="course.prev">←</button><span class="course-count" id="course-position" aria-live="polite"></span><button id="next-course" aria-label="下一课" data-i18n-label="course.next">→</button></div>
 <nav class="tabs" role="tablist" aria-label="学习内容" data-i18n-label="nav.label">
 <span class="nav-section" aria-hidden="true" data-i18n="nav.study">课内学习</span>
 <button id="tab-read" role="tab" aria-controls="read" aria-selected="true" data-tab="read" data-index="01" data-i18n="tab.read">课文阅读</button>
@@ -37,6 +37,11 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <header><div><h1><span data-i18n="header.desk">学习台</span> <span id="course-heading"></span></h1><p id="course-subtitle"></p></div>
 <div class="head-actions">
 <label class="global-ruby-switch" title="全站日语文字注音" data-i18n-title="ruby.title"><input id="ruby-toggle" type="checkbox" checked><span data-i18n="ruby.label">假名</span></label>
+<details class="display-menu glass-only"><summary data-i18n="display.label">显示</summary><div class="display-pop">
+<label><span data-i18n="ruby.label">假名</span><input type="checkbox" data-mirror="ruby-toggle"></label>
+<label><span data-i18n="read.words">词汇高亮</span><input type="checkbox" data-mirror="vocab-toggle"></label>
+<label><span data-i18n="read.grammar">语法下划线</span><input type="checkbox" data-mirror="grammar-toggle"></label>
+</div></details>
 <label id="learner-control"><span data-i18n="learner.label">学习者</span> <select id="learner" aria-label="学习档案" data-i18n-label="learner.select"></select></label>
 <details class="header-more"><summary aria-label="更多选项" data-i18n-label="more.label">•••</summary><div class="more-menu">
 <details class="course-context"><summary data-i18n="more.course">课程说明</summary><p id="course-status"></p></details>
@@ -55,7 +60,7 @@ Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. -->
 <section id="read" role="tabpanel" aria-labelledby="tab-read">
 <div class="section-bar"><h2 data-i18n="read.title">课文</h2><div class="bar-controls"><label><input id="vocab-toggle" type="checkbox" checked><span class="legend-word" data-i18n="read.words">词汇高亮</span></label><label><input id="grammar-toggle" type="checkbox" checked><span class="legend-grammar" data-i18n="read.grammar">语法下划线</span></label><button id="translation-open" data-i18n="read.translation">对照译文 ↗</button></div></div>
 <div class="reading-grid"><article class="paper"><h2 id="passage-heading" class="passage-title" lang="ja"></h2><p class="source" id="passage-source"></p><div id="passage" class="passage" lang="ja"></div><p class="intro-note" id="passage-note"></p></article>
-<div id="detail-shell" class="detail-shell"><div class="detail-cap"><span data-i18n="detail.cap">READING COMPANION · 随读解释</span><button id="detail-close" data-i18n="detail.done">完成 ×</button></div><aside id="detail" class="detail" aria-label="选中词解释" data-i18n-label="detail.label"></aside></div></div>
+<div id="detail-shell" class="detail-shell"><div class="detail-cap"><span class="classic-only" data-i18n="detail.cap">READING COMPANION · 随读解释</span><span class="glass-only" data-i18n="detail.capShort">随读解释</span><button id="detail-close" data-i18n="detail.done">完成 ×</button></div><aside id="detail" class="detail" aria-label="选中词解释" data-i18n-label="detail.label"></aside></div></div>
 </section>
 <section id="words" role="tabpanel" aria-labelledby="tab-words" hidden>
 <div class="section-bar"><h2 data-i18n="words.title">词汇</h2><div class="bar-controls"><input id="search" type="search" placeholder="日语、假名或译文" aria-label="查找词条" data-i18n-placeholder="words.search" data-i18n-label="words.searchLabel"><span id="note-progress" role="status"></span><button id="hide-refs"></button></div></div>

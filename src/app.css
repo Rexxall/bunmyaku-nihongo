@@ -76,3 +76,5 @@ body:not(.hide-ruby) .detail h3:has(ruby)+.kana{display:none}
 .clip-incoming{border:2px solid var(--blue);margin-bottom:16px}
 .clip-incoming h3:focus{outline:none}
 .clip-desk-url{overflow-wrap:anywhere;font-size:13px;background:var(--group, #eef3ec);border-radius:6px;padding:1px 6px}
+/* Controls that only the glass look shows (glass.css) */
+.glass-only{display:none}

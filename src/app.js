@@ -283,7 +283,7 @@ function renderPassage() {
     const tr = p.translation || {};
     const grammarButtons = grammar().filter(g => g.phrase && p.text.includes(g.phrase)).map(g => `<button data-gview="${esc(g.id)}">${esc(g.name)}</button>`).join('');
     const sentences = Array.isArray(p.sentences) && p.sentences.length ? `<details class="sentence-toggle"><summary>${t('read.sentences', {n: p.sentences.length})}</summary><ol class="sentence-list">${p.sentences.map(s => `<li class="sentence-card"><p class="sentence-ja" lang="ja">${rubyHTML(s.text, s.ruby, s.ruby_status)}</p><p lang="${TL}">${esc(s.translation || '')}</p>${s.structure ? `<h4>${t('read.structure')}</h4><p lang="${TL}">${esc(s.structure)}</p>` : ''}${s.usage ? `<h4>${t('read.usage')}</h4><p lang="${TL}">${esc(s.usage)}</p>` : ''}${s.example ? `<div class="sentence-example"><p lang="ja">${rubyHTML(s.example, s.example_ruby)}</p><p lang="${TL}">${esc(s.example_translation || '')}</p></div>` : ''}<button type="button" class="ask-sentence" data-ask-sentence="${esc(s.text)}">${t('read.askSentence')}</button></li>`).join('')}</ol></details>` : '';
-    return `<div class="p-label">${t('read.paragraph', {n: i + 1})} ${statusChip(p.ruby_status)}</div><p>${annotateParagraph(p)}</p><div class="grammar-actions">${grammarButtons}</div>${tr.text ? `<details class="paragraph-translation"><summary>${t('read.paragraphTranslation')} ${statusChip(tr.status)}</summary><div lang="${TL}">${esc(tr.text)}</div></details>` : ''}${sentences}`;
+    return `<div class="p-label">${t('read.paragraph', {n: i + 1})} ${statusChip(p.ruby_status)}</div><p>${annotateParagraph(p)}</p><div class="grammar-actions">${grammarButtons}</div>${tr.text ? `<details class="paragraph-translation"><summary><span class="classic-only">${t('read.paragraphTranslation')}</span><span class="glass-only">${t('read.paragraphTranslationShort')}</span> ${statusChip(tr.status)}</summary><div lang="${TL}">${esc(tr.text)}</div></details>` : ''}${sentences}`;
   }).join('');
   document.querySelectorAll('[data-gview]').forEach(b => b.onclick = () => selectGrammar(b.dataset.gview, b));
   document.querySelectorAll('[data-ask-sentence]').forEach(b => b.onclick = () => { openTutor(); tutorSelection = b.dataset.askSentence; tutorRender(); $('tutor-question').value = t('read.askSentencePrompt'); });
@@ -702,7 +702,18 @@ $('ui-lang').onchange = e => {
 };
 // Classic is the default look; glass (light and dark following the system) is the alternative. page.html applies it before the first paint.
 $('ui-look').value = document.documentElement.classList.contains('ap') ? 'glass' : 'classic';
-$('ui-look').onchange = e => { document.documentElement.classList.toggle('ap', e.target.value === 'glass'); store.set(K.look, e.target.value); };
+$('ui-look').onchange = e => { coursePicker?.close(); document.documentElement.classList.toggle('ap', e.target.value === 'glass'); store.set(K.look, e.target.value); };
+// Glass look: the ruby, vocabulary and grammar switches sit together in one Display menu; each mirrors its original control.
+document.querySelectorAll('[data-mirror]').forEach(box => {
+  const source = $(box.dataset.mirror);
+  const sync = () => { box.checked = source.checked; };
+  box.onchange = () => { source.checked = box.checked; source.dispatchEvent(new Event('change')); };
+  source.addEventListener('change', sync); sync();
+});
+const displayMenu = document.querySelector('.display-menu');
+displayMenu.addEventListener('toggle', () => { if (displayMenu.open) document.querySelectorAll('[data-mirror]').forEach(box => { box.checked = $(box.dataset.mirror).checked; }); });
+document.addEventListener('click', e => { if (displayMenu.open && !displayMenu.contains(e.target)) displayMenu.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && displayMenu.open) { displayMenu.open = false; displayMenu.querySelector('summary').focus(); } });
 
 // The header menu closes after an action, on Escape, and on a click elsewhere.
 const moreMenu = document.querySelector('.header-more');
@@ -728,6 +739,7 @@ document.querySelectorAll('[data-tab]').forEach((b, i, arr) => {
   b.onkeydown = e => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) { e.preventDefault(); const j = e.key === 'Home' ? 0 : e.key === 'End' ? arr.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + arr.length) % arr.length; showTab(arr[j].dataset.tab); arr[j].focus(); } };
 });
 function renderAll() { renderPassage(); renderDetail(); renderWords(); renderGrammars(); renderExercises(); renderListening(); renderNotes(); renderClips(); updateProgress(); }
+let coursePicker = null; // set once the course list exists (glass look)
 function switchCourse(id) {
   saveStudyPosition();
   L = LESSONS.find(l => l.id === String(id)) || LESSONS[0]; course = L.id;
@@ -741,12 +753,80 @@ function switchCourse(id) {
   $('tab-listening').textContent = `${t('tab.listening')}${(L.listening || []).length ? ' · ' + L.listening.length : ''}`;
   $('prev-course').disabled = index === 0; $('next-course').disabled = index === LESSONS.length - 1;
   $('course-position').textContent = `${index + 1} / ${LESSONS.length}`; $('course').title = $('course').selectedOptions[0]?.textContent || '';
+  coursePicker?.set(course);
   document.title = `${L.title} · Bunmyaku`;
   renderAll(); showTab('read');
   $('save-status').textContent = storageOK ? t('save.local') : t('save.export');
 }
 $('course').innerHTML = LESSONS.map(l => `<option value="${esc(l.id)}">${l.number ? esc(t('course.number', {n: l.number})) + ' · ' : ''}${esc(l.title)}</option>`).join('');
 $('course').onchange = e => switchCourse(e.target.value);
+
+// Glass look: a capsule picker (shared glass kit, 74 appendix B) stands in for the native course select and drives it.
+function createPicker(parent, options, value, onChange, label) {
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = 'ap-picker';
+  button.setAttribute('aria-haspopup', 'listbox'); button.setAttribute('aria-expanded', 'false');
+  if (label) button.setAttribute('aria-label', label);
+  const valueEl = document.createElement('span'); valueEl.className = 'ap-picker-value'; button.append(valueEl); parent.append(button);
+  let current = value, menu = null, holder = null, focused = 0;
+  const render = () => { const o = options.find(x => x.value === current); valueEl.textContent = o ? o.label : current; button.title = o ? o.label : ''; };
+  const onOutside = e => { if (menu && !menu.contains(e.target) && !button.contains(e.target)) close(); };
+  const onScroll = e => { if (menu && !menu.contains(e.target)) close(); };
+  function close() {
+    if (!menu) return;
+    holder.remove(); menu = null; holder = null; button.setAttribute('aria-expanded', 'false');
+    window.removeEventListener('keydown', onKey, true); document.removeEventListener('mousedown', onOutside, true); document.removeEventListener('scroll', onScroll, true);
+  }
+  const choose = i => { const o = options[i]; if (!o) return; close(); button.focus(); if (o.value !== current) { current = o.value; render(); onChange(current); } };
+  const move = i => {
+    if (!menu) return;
+    focused = (i + options.length) % options.length;
+    const items = [...menu.querySelectorAll('.ap-menu-item')];
+    items.forEach((item, j) => item.classList.toggle('is-focused', j === focused));
+    menu.setAttribute('aria-activedescendant', items[focused]?.id || '');
+    items[focused]?.scrollIntoView({block: 'nearest'});
+  };
+  const open = () => {
+    menu = document.createElement('div'); menu.className = 'ap ap-menu'; menu.setAttribute('role', 'listbox'); menu.tabIndex = -1;
+    if (label) menu.setAttribute('aria-label', label);
+    options.forEach((o, i) => {
+      const item = document.createElement('div'); item.className = 'ap-menu-item'; item.id = `${parent.id}-option-${i}`;
+      item.setAttribute('role', 'option'); item.setAttribute('aria-selected', String(o.value === current));
+      const text = document.createElement('span'); text.className = 'ap-menu-label'; text.textContent = o.label; item.append(text);
+      item.addEventListener('mousemove', () => move(i)); item.addEventListener('click', () => choose(i));
+      menu.append(item);
+    });
+    // On top of everything, inside a labelled region so the list still sits in a landmark.
+    holder = document.createElement('div'); holder.setAttribute('role', 'region'); if (label) holder.setAttribute('aria-label', label);
+    holder.append(menu); document.body.append(holder);
+    const rect = button.getBoundingClientRect();
+    menu.style.minWidth = `${Math.max(180, rect.width)}px`;
+    const box = menu.getBoundingClientRect();
+    // Line the list up with the button's nearer edge, then keep it on screen.
+    const start = rect.left + rect.width / 2 > innerWidth / 2 ? rect.right - box.width : rect.left;
+    menu.style.left = `${Math.min(Math.max(8, start), innerWidth - box.width - 8)}px`;
+    menu.style.top = `${rect.bottom + 6 + box.height > innerHeight - 8 ? Math.max(8, rect.top - box.height - 6) : rect.bottom + 6}px`;
+    button.setAttribute('aria-expanded', 'true');
+    move(Math.max(0, options.findIndex(o => o.value === current)));
+    window.addEventListener('keydown', onKey, true); menu.focus();
+    document.addEventListener('mousedown', onOutside, true); document.addEventListener('scroll', onScroll, true);
+  };
+  function onKey(e) {
+    if (e.key === 'ArrowDown') move(focused + 1);
+    else if (e.key === 'ArrowUp') move(focused - 1);
+    else if (e.key === 'Home') move(0);
+    else if (e.key === 'End') move(options.length - 1);
+    else if (e.key === 'Enter' || e.key === ' ') choose(focused);
+    else if (e.key === 'Escape' || e.key === 'Tab') { close(); button.focus(); }
+    else return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+  }
+  button.addEventListener('click', () => (menu ? close() : open()));
+  button.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (!menu) open(); } });
+  render();
+  return {button, set(next) { current = next; render(); }, close};
+}
+coursePicker = createPicker($('course-picker'), [...$('course').options].map(o => ({value: o.value, label: o.textContent})), $('course').value, v => switchCourse(v), t('course.select'));
 $('prev-course').onclick = () => { const i = LESSONS.indexOf(L); if (i > 0) switchCourse(LESSONS[i - 1].id); };
 $('next-course').onclick = () => { const i = LESSONS.indexOf(L); if (i < LESSONS.length - 1) switchCourse(LESSONS[i + 1].id); };
 $('pack-title').textContent = PACK.title || PACK_ID; $('pack-license').textContent = PACK.license ? t('license', {license: PACK.license}) : '';

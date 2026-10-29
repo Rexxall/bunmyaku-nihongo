@@ -84,11 +84,11 @@ html.ap{scroll-padding-top:calc(var(--head-h) + 12px)}
 :where(.ap) input[type=checkbox]:checked{background:var(--accent-fill);box-shadow:none}
 :where(.ap) input[type=checkbox]:checked::after{content:"";width:4px;height:8px;border:solid var(--on-accent);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
 /* On/off settings are switches; the label next to each still names it */
-:where(.ap) #ruby-toggle,:where(.ap) #vocab-toggle,:where(.ap) #grammar-toggle,:where(.ap) #parallel,:where(.ap) .global-ruby-switch input{width:32px;height:20px;border-radius:var(--ap-r-pill);background:var(--fill-strong);box-shadow:none;position:relative;display:inline-block}
-:where(.ap) #ruby-toggle::after,:where(.ap) #vocab-toggle::after,:where(.ap) #grammar-toggle::after,:where(.ap) #parallel::after,:where(.ap) .global-ruby-switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);transform:none;transition:transform var(--ap-base) var(--ap-ease-spring)}
-:where(.ap) #ruby-toggle:checked,:where(.ap) #vocab-toggle:checked,:where(.ap) #grammar-toggle:checked,:where(.ap) #parallel:checked,:where(.ap) .global-ruby-switch input:checked{background:var(--accent-fill)}
-:where(.ap) #ruby-toggle:checked::after,:where(.ap) #vocab-toggle:checked::after,:where(.ap) #grammar-toggle:checked::after,:where(.ap) #parallel:checked::after,:where(.ap) .global-ruby-switch input:checked::after{transform:translateX(12px)}
-:where(.ap) .bar-controls input[type=checkbox],:where(.ap) .global-ruby-switch input,:where(.ap) .toolbar input[type=checkbox]{width:32px;height:20px;min-height:0;min-width:0;padding:0}
+:where(.ap) #ruby-toggle,:where(.ap) #vocab-toggle,:where(.ap) #grammar-toggle,:where(.ap) #parallel,:where(.ap) .global-ruby-switch input,:where(.ap) .display-pop input[type=checkbox]{width:32px;height:20px;border-radius:var(--ap-r-pill);background:var(--fill-strong);box-shadow:none;position:relative;display:inline-block}
+:where(.ap) #ruby-toggle::after,:where(.ap) #vocab-toggle::after,:where(.ap) #grammar-toggle::after,:where(.ap) #parallel::after,:where(.ap) .global-ruby-switch input::after,:where(.ap) .display-pop input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);transform:none;transition:transform var(--ap-base) var(--ap-ease-spring)}
+:where(.ap) #ruby-toggle:checked,:where(.ap) #vocab-toggle:checked,:where(.ap) #grammar-toggle:checked,:where(.ap) #parallel:checked,:where(.ap) .global-ruby-switch input:checked,:where(.ap) .display-pop input[type=checkbox]:checked{background:var(--accent-fill)}
+:where(.ap) #ruby-toggle:checked::after,:where(.ap) #vocab-toggle:checked::after,:where(.ap) #grammar-toggle:checked::after,:where(.ap) #parallel:checked::after,:where(.ap) .global-ruby-switch input:checked::after,:where(.ap) .display-pop input[type=checkbox]:checked::after{transform:translateX(12px)}
+:where(.ap) .bar-controls input[type=checkbox],:where(.ap) .global-ruby-switch input,:where(.ap) .display-pop input[type=checkbox],:where(.ap) .toolbar input[type=checkbox]{width:32px;height:20px;min-height:0;min-width:0;padding:0}
 :where(.ap) .bar-controls input[type=checkbox]:not(:checked)~.legend-word,:where(.ap) .bar-controls input[type=checkbox]:not(:checked)~.legend-grammar{background:none;border-bottom-color:transparent}
 :where(.ap) .detail .jp{background:var(--surface)}
 
@@ -213,6 +213,31 @@ html.ap{scroll-padding-top:calc(var(--head-h) + 12px)}
 :where(.ap) body>.detail-shell.is-open,:where(.ap) .detail-shell.is-open{background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);box-shadow:var(--ap-glass-edge),var(--ap-shadow-3);border-radius:var(--ap-r-sheet) var(--ap-r-sheet) 0 0}
 :where(.ap) .drawer-open #detail-backdrop{background:var(--scrim);-webkit-backdrop-filter:none;backdrop-filter:none}
 :where(.ap) #toast{background:var(--ap-glass);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);color:var(--label);border-radius:var(--ap-r-pill);box-shadow:var(--ap-glass-edge),var(--ap-shadow-2);font-weight:500}
+
+/* ---------- Glass-only controls (74 kit: capsule picker, disclosure capsules, one Display menu) ---------- */
+:where(.ap) .glass-only{display:revert}
+:where(.ap) .classic-only,:where(.ap) #course,:where(.ap) .global-ruby-switch,:where(.ap) .bar-controls label:has(#vocab-toggle),:where(.ap) .bar-controls label:has(#grammar-toggle){display:none!important}
+/* The course picker fills the select's place in the course bar */
+:where(.ap) #course-picker{display:flex;width:100%;min-width:0;order:1}
+:where(.ap) #course-picker .ap-picker{display:inline-flex;flex:1;width:100%;min-width:0;min-height:34px;padding:0 12px 0 14px;justify-content:space-between;border:0;border-radius:var(--ap-r-pill);background:var(--fill);color:var(--label);font:500 14px/1.3 var(--ap-font);order:0}
+:where(.ap) #course-picker .ap-picker:hover,:where(.ap) #course-picker .ap-picker[aria-expanded=true]{background:var(--fill-strong)}
+@media(max-width:1100px){:where(.ap) #course-picker .ap-picker{min-height:32px;font-size:13px}}
+:where(.ap) .ap-menu{background:var(--glass-dense)}
+/* Disclosures read as small capsules instead of bare triangles */
+:where(.ap) .paragraph-translation>summary,:where(.ap) .sentence-toggle>summary,:where(.ap) .notes>summary,:where(.ap) .word-reference>summary,:where(.ap) #detail details>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 12px;border-radius:var(--ap-r-pill);background:var(--fill);color:var(--label);font:500 12px/1.2 var(--ap-font)}
+:where(.ap) .paragraph-translation>summary::-webkit-details-marker,:where(.ap) .sentence-toggle>summary::-webkit-details-marker,:where(.ap) .notes>summary::-webkit-details-marker,:where(.ap) .word-reference>summary::-webkit-details-marker,:where(.ap) #detail details>summary::-webkit-details-marker{display:none}
+:where(.ap) .paragraph-translation>summary:hover,:where(.ap) .sentence-toggle>summary:hover,:where(.ap) .notes>summary:hover,:where(.ap) .word-reference>summary:hover,:where(.ap) #detail details>summary:hover{background:var(--fill-strong)}
+:where(.ap) .paragraph-translation[open]>summary,:where(.ap) .sentence-toggle[open]>summary,:where(.ap) .notes[open]>summary,:where(.ap) .word-reference[open]>summary,:where(.ap) #detail details[open]>summary{background:var(--accent-tint);color:var(--accent)}
+:where(.ap) .paragraph-translation>summary .status-chip{margin-left:0}
+/* Display menu: ruby, vocabulary highlight and grammar underline in one place */
+:where(.ap) .display-menu{position:relative}
+:where(.ap) .display-menu>summary{list-style:none;display:inline-flex;align-items:center;min-height:32px;padding:0 14px;border-radius:var(--ap-r-pill);background:var(--fill);color:var(--label);font-weight:500;font-size:13px}
+:where(.ap) .display-menu>summary::-webkit-details-marker{display:none}
+:where(.ap) .display-menu>summary:hover,:where(.ap) .display-menu[open]>summary{background:var(--fill-strong)}
+:where(.ap) .display-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;min-width:200px;padding:6px;display:grid;gap:2px;background:var(--glass-dense);-webkit-backdrop-filter:var(--ap-blur);backdrop-filter:var(--ap-blur);border-radius:16px;box-shadow:var(--ap-glass-edge),var(--ap-shadow-2)}
+:where(.ap) .display-pop label{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:36px;padding:0 10px;border-radius:10px;color:var(--label);font-size:13px;white-space:nowrap;cursor:pointer}
+:where(.ap) .display-pop label:hover{background:var(--fill)}
+:where(.ap) .display-pop input[type=checkbox]{flex:none;margin:0;min-height:0;min-width:0;padding:0;appearance:none;-webkit-appearance:none}
 
 /* ---------- Web clips ---------- */
 :where(.ap) .clip-install{border:0;background:var(--group);border-radius:var(--ap-r-group);box-shadow:var(--ap-hair)}

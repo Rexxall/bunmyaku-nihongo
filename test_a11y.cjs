@@ -79,6 +79,13 @@ const clipHash = '#clip=' + encodeURIComponent(JSON.stringify({text: '駅前の�
       await open(width, `#lesson=${first}&panel=read`);
       await page.locator('.header-more > summary').click(); await scan(`${width}px header menu`);
       await page.locator('#profiles-edit').click(); await scan(`${width}px profiles dialog`);
+      if (look === 'glass') {
+        await open(width, `#lesson=${first}&panel=read`);
+        await page.locator('#course-picker button').click(); await page.waitForTimeout(250); await scan(`${width}px course picker`);
+        await page.keyboard.press('Escape'); await expectFocus(`${width}px course picker Esc`, /button/);
+        await page.locator('.display-menu > summary').click(); await scan(`${width}px display menu`);
+        await page.locator('.paragraph-translation > summary').first().click(); await scan(`${width}px disclosure capsules`);
+      }
       await open(width, `#lesson=${first}&panel=read`);
       await page.locator('#translation-open').click(); await scan(`${width}px translation dialog`);
       await open(width, `#lesson=${first}&panel=clips`);
